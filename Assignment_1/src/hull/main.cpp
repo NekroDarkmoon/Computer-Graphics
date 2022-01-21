@@ -15,10 +15,28 @@ double inline det(const Point &u, const Point &v) {
 	return 0;
 }
 
+
+double inline distance(const Point p1, const Point p2) {
+	return val = (std::exp2(p1.real() - p2.real()) + std::exp2(p1.imag() - p2.imag()));
+}
+
+
 struct Compare {
 	Point p0; // Leftmost point of the poly
 	bool operator ()(const Point &p1, const Point &p2) {
 		// TODO
+		// Get Orientation
+		double retVal = ((p1.imag() - p0.imag()) * (p2.real() - p1.real())) - 
+								 ((p1.real() - p0.real()) * (p2.imag() - p1.imag()));
+		
+		// Colinear
+		if (retVal == 0) {
+			// Get distance count without sqrt	
+			return ( distance(p0, p1) <= distance(p0, p2) );
+		}
+
+		if (retVal > 0) return false;
+
 		return true;
 	}
 };
@@ -28,6 +46,11 @@ bool inline salientAngle(Point &a, Point &b, Point &c) {
 	return false;
 }
 
+
+
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 Polygon convex_hull(std::vector<Point> &points) {
@@ -36,6 +59,10 @@ Polygon convex_hull(std::vector<Point> &points) {
 	order.p0 = Point(0, 0);
 	std::sort(points.begin(), points.end(), order);
 	Polygon hull;
+
+	//  DEBUG PRINT
+	for (auto const& value : points) std::cout << value << std::endl;
+
 	// TODO
 	// use salientAngle(a, b, c) here
 	return hull;
@@ -77,6 +104,9 @@ std::vector<Point> load_xyz(const std::string &filename) {
 
 	//  DEBUG PRINT
 	for (auto const& value : points) std::cout << value << std::endl;
+	std::cout << '\n';
+	std::cout << '\n';
+	std::cout << '\n';
 
 	return points;
 }
