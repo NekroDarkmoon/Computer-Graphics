@@ -107,7 +107,7 @@ int main(int argc, char * argv[]) {
 	std::vector<Point> points = load_xyz(argv[1]);
 
 	// Generate convex hull
-	// Polygon hull = convex_hull(points);
+	Polygon hull = convex_hull(points);
 
 	// Save as obj
 	// save_obj(argv[2], hull);
