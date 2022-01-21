@@ -15,16 +15,13 @@ double inline det(const Point &u, const Point &v) {
 	return 0;
 }
 
-
-double inline distance(const Point p1, const Point p2) {
-	return val = (std::exp2(p1.real() - p2.real()) + std::exp2(p1.imag() - p2.imag()));
+double inline distance(const Point &p1, const Point &p2) {
+	return (std::pow(p1.real() - p2.real(), 2) + std::pow(p1.imag() - p2.imag(), 2));
 }
-
 
 struct Compare {
 	Point p0; // Leftmost point of the poly
 	bool operator ()(const Point &p1, const Point &p2) {
-		// TODO
 		// Get Orientation
 		double retVal = ((p1.imag() - p0.imag()) * (p2.real() - p1.real())) - 
 								 ((p1.real() - p0.real()) * (p2.imag() - p1.imag()));
@@ -35,20 +32,35 @@ struct Compare {
 			return ( distance(p0, p1) <= distance(p0, p2) );
 		}
 
+		// CLockwise
 		if (retVal > 0) return false;
-
 		return true;
 	}
 };
 
+
+/*
+	a --> mid
+	b --> origin
+	c --> new
+*/
 bool inline salientAngle(Point &a, Point &b, Point &c) {
-	// TODO
+	// Use points to create vectors
+	Point u( (a.real() - b.real()), (a.imag() - b.imag()) ); 
+	Point v( (a.real() - c.real()), (a.imag() - c.imag()) ); 
+
+	// Angle = arccos( (a.b) / |a||b| )
+	double uv = (u.real() * v.real()) + (u.imag() * v.imag());
+	double magU = std::sqrt( std::pow(u.real(), 2) + std::pow(u.imag(), 2) );
+	double magV = std::sqrt( std::pow(v.real(), 2) + std::pow(v.imag(), 2) );
+	double angle = std::acos( uv / (magU * magV) );
+
+	std::cout << angle << std::endl;
+
+	if (angle > 3.14159) return false;
+
 	return false;
 }
-
-
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -65,6 +77,9 @@ Polygon convex_hull(std::vector<Point> &points) {
 
 	// TODO
 	// use salientAngle(a, b, c) here
+	
+	salientAngle(points[0], points[1], points[2]);
+	
 	return hull;
 }
 
@@ -140,7 +155,7 @@ int main(int argc, char * argv[]) {
 	Polygon hull = convex_hull(points);
 
 	// Save as obj
-	// save_obj(argv[2], hull);
+	save_obj(argv[2], hull);
 
 	return 0;
 }
