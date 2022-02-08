@@ -34,32 +34,35 @@ struct Compare {
 
 		// CLockwise
 		if (retVal > 0) return false;
-		return true;
+		return true;	
 	}
 };
 
 
 /*
-	a --> mid
-	b --> origin
-	c --> new
 */
 bool inline salientAngle(Point &a, Point &b, Point &c) {
 	// Use points to create vectors
-	Point u( (a.real() - b.real()), (a.imag() - b.imag()) ); 
-	Point v( (a.real() - c.real()), (a.imag() - c.imag()) ); 
+	// Point u( (b.real() - a.real()), (b.imag() - a.imag()) ); 
+	// Point v( (b.real() - c.real()), (b.imag() - c.imag()) ); 
 
-	// Angle = arccos( (a.b) / |a||b| )
-	double uv = (u.real() * v.real()) + (u.imag() * v.imag());
-	double magU = std::sqrt( std::pow(u.real(), 2) + std::pow(u.imag(), 2) );
-	double magV = std::sqrt( std::pow(v.real(), 2) + std::pow(v.imag(), 2) );
-	double angle = std::acos( uv / (magU * magV) );
+	// // Angle = arccos( (a.b) / |a||b| )
+	// double uv = (u.real() * v.real()) + (u.imag() * v.imag());
+	// double magU = std::sqrt( std::pow(u.real(), 2) + std::pow(u.imag(), 2) );
+	// double magV = std::sqrt( std::pow(v.real(), 2) + std::pow(v.imag(), 2) );
+	// double angle = std::acos( uv / (magU * magV) );
 
-	std::cout << angle << std::endl;
+	// std::cout << angle << std::endl;
+	// if (angle > 3.14159) return false;
 
-	if (angle > 3.14159) return false;
+	// return true;
 
-	return false;
+	double retVal = ((b.imag() - a.imag()) * (c.real() - b.real())) - 
+								 ((b.real() - a.real()) * (c.imag() - b.imag()));
+
+	if (retVal >=0 ) return false;
+	
+	return true;
 }
 
 
@@ -67,19 +70,47 @@ bool inline salientAngle(Point &a, Point &b, Point &c) {
 
 Polygon convex_hull(std::vector<Point> &points) {
 	Compare order;
-	// TODO
-	order.p0 = Point(0, 0);
+
+	// Get left most point
+	double minY = points[0].imag();
+	int min = 0, pos = 0;
+	for (auto const& value : points) {
+		if ((value.imag() < minY) || 
+				(minY == value.imag() && value.real() < points[min].real())) {
+			min = pos;
+		}
+		pos++;
+	}
+
+	std::cout << points[min] << std::endl;
+	std::cout << "---------" << std::endl;
+
+	order.p0 = points[min];
 	std::sort(points.begin(), points.end(), order);
 	Polygon hull;
 
 	//  DEBUG PRINT
-	for (auto const& value : points) std::cout << value << std::endl;
+	// for (auto const& value : points) std::cout << value << std::endl;
 
 	// TODO
+	for (int i=0; i < points.size(); i++){
+		if (i == 0 || i == 1 ) { hull.push_back(points[i]); continue; }
+		
+		std::cout << "i-2" << points[i-2] << std::endl;
+		std::cout << "i-1" << points[i - 1] << std::endl;
+		std::cout << "i" << points[i] << std::endl;
+
+		if ( salientAngle(points[i-2], points[i-1], points[i]) ) {
+			std::cout << "Popped " << i << std::endl;
+			points.pop_back();
+		}
+
+
+		hull.push_back(points[i]);
+	}
 	// use salientAngle(a, b, c) here
-	
-	salientAngle(points[0], points[1], points[2]);
-	
+
+
 	return hull;
 }
 
