@@ -14,7 +14,8 @@
 // Shortcut to avoid Eigen:: everywhere, DO NOT USE IN .h
 using namespace Eigen;
 
-void raytrace_sphere() {
+void raytrace_sphere()
+{
   std::cout << "Simple ray tracer, one sphere with orthographic projection"
             << std::endl;
 
@@ -31,8 +32,10 @@ void raytrace_sphere() {
   // Single light source
   const Vector3d light_position(-1, 1, 1);
 
-  for (unsigned i = 0; i < C.cols(); ++i) {
-    for (unsigned j = 0; j < C.rows(); ++j) {
+  for (unsigned i = 0; i < C.cols(); ++i)
+  {
+    for (unsigned j = 0; j < C.rows(); ++j)
+    {
       // Prepare the ray
       Vector3d ray_origin =
           origin + double(i) * x_displacement + double(j) * y_displacement;
@@ -44,7 +47,8 @@ void raytrace_sphere() {
       Vector2d ray_on_xy(ray_origin(0), ray_origin(1));
       const double sphere_radius = 0.9;
 
-      if (ray_on_xy.norm() < sphere_radius) {
+      if (ray_on_xy.norm() < sphere_radius)
+      {
         // The ray hit the sphere, compute the exact intersection point
         Vector3d ray_intersection(
             ray_on_xy(0), ray_on_xy(1),
@@ -70,7 +74,32 @@ void raytrace_sphere() {
   write_matrix_to_png(C, C, C, A, filename);
 }
 
-void raytrace_parallelogram() {
+bool intersects(Vector3d rayOrigin, Vector3d rayDir, Vector3d pOrigin,
+                Vector3d u, Vector3d v, Vector3d &intersection)
+{
+  Vector3d p = rayDir.cross(v);
+  float det = u.dot(p);
+
+  float detInverse = 1.0 / det;
+  Vector3d t = rayOrigin - pOrigin;
+  Vector3d q = t.cross(u);
+
+  float a = t.dot(p) * detInverse;
+  // std::cout << "a: " << a << std::endl;
+  float b = rayDir.dot(q) * detInverse;
+  // std::cout << "b: " << b << std::endl;
+
+  if (a < 0 || a > 1 || b < 0 || b > 1)
+    return false;
+
+  Vector3d temp = rayOrigin + (rayDir * (detInverse * v.dot(q)));
+  intersection = temp;
+
+  return true;
+}
+
+void raytrace_parallelogram()
+{
   std::cout
       << "Simple ray tracer, one parallelogram with orthographic projection"
       << std::endl;
@@ -85,27 +114,32 @@ void raytrace_parallelogram() {
   Vector3d x_displacement(2.0 / C.cols(), 0, 0);
   Vector3d y_displacement(0, -2.0 / C.rows(), 0);
 
-  // TODO: Parameters of the parallelogram (position of the lower-left corner +
+  // Parameters of the parallelogram (position of the lower-left corner +
   // two sides)
-  Vector3d pgram_origin;
-  Vector3d pgram_u;
-  Vector3d pgram_v;
+  const Vector3d pgram_origin(-0.5, -0.5, 0);
+  const Vector3d pgram_u(0, 0.7, -10);
+  const Vector3d pgram_v(1, 0.4, 0);
 
   // Single light source
   const Vector3d light_position(-1, 1, 1);
 
-  for (unsigned i = 0; i < C.cols(); ++i) {
-    for (unsigned j = 0; j < C.rows(); ++j) {
+  for (unsigned i = 0; i < C.cols(); ++i)
+  {
+    for (unsigned j = 0; j < C.rows(); ++j)
+    {
       // Prepare the ray
       Vector3d ray_origin =
           origin + double(i) * x_displacement + double(j) * y_displacement;
       Vector3d ray_direction = RowVector3d(0, 0, -1);
+      Vector3d intersection;
 
-      // TODO: Check if the ray intersects with the parallelogram
-      if (true) {
+      // Check if the ray intersects with the parallelogram
+      if (intersects(ray_origin, ray_direction, pgram_origin, pgram_u,
+                     pgram_v, intersection))
+      {
         // TODO: The ray hit the parallelogram, compute the exact intersection
         // point
-        Vector3d ray_intersection(0, 0, 0);
+        Vector3d ray_intersection = intersection;
 
         // TODO: Compute normal at the intersection point
         Vector3d ray_normal = ray_intersection.normalized();
@@ -127,7 +161,8 @@ void raytrace_parallelogram() {
   write_matrix_to_png(C, C, C, A, filename);
 }
 
-void raytrace_perspective() {
+void raytrace_perspective()
+{
   std::cout
       << "Simple ray tracer, one parallelogram with perspective projection"
       << std::endl;
@@ -151,15 +186,18 @@ void raytrace_perspective() {
   // Single light source
   const Vector3d light_position(-1, 1, 1);
 
-  for (unsigned i = 0; i < C.cols(); ++i) {
-    for (unsigned j = 0; j < C.rows(); ++j) {
+  for (unsigned i = 0; i < C.cols(); ++i)
+  {
+    for (unsigned j = 0; j < C.rows(); ++j)
+    {
       // TODO: Prepare the ray (origin point and direction)
       Vector3d ray_origin =
           origin + double(i) * x_displacement + double(j) * y_displacement;
       Vector3d ray_direction = RowVector3d(0, 0, -1);
 
       // TODO: Check if the ray intersects with the parallelogram
-      if (true) {
+      if (true)
+      {
         // TODO: The ray hit the parallelogram, compute the exact intersection
         // point
         Vector3d ray_intersection(0, 0, 0);
@@ -184,7 +222,8 @@ void raytrace_perspective() {
   write_matrix_to_png(C, C, C, A, filename);
 }
 
-void raytrace_shading() {
+void raytrace_shading()
+{
   std::cout << "Simple ray tracer, one sphere with different shading"
             << std::endl;
 
@@ -204,8 +243,10 @@ void raytrace_shading() {
   MatrixXd diffuse = MatrixXd::Zero(800, 800);
   MatrixXd specular = MatrixXd::Zero(800, 800);
 
-  for (unsigned i = 0; i < C.cols(); ++i) {
-    for (unsigned j = 0; j < C.rows(); ++j) {
+  for (unsigned i = 0; i < C.cols(); ++i)
+  {
+    for (unsigned j = 0; j < C.rows(); ++j)
+    {
       // Prepare the ray
       Vector3d ray_origin =
           origin + double(i) * x_displacement + double(j) * y_displacement;
@@ -217,7 +258,8 @@ void raytrace_shading() {
       Vector2d ray_on_xy(ray_origin(0), ray_origin(1));
       const double sphere_radius = 0.9;
 
-      if (ray_on_xy.norm() < sphere_radius) {
+      if (ray_on_xy.norm() < sphere_radius)
+      {
         // The ray hit the sphere, compute the exact intersection point
         Vector3d ray_intersection(
             ray_on_xy(0), ray_on_xy(1),
@@ -250,11 +292,12 @@ void raytrace_shading() {
   write_matrix_to_png(C, C, C, A, filename);
 }
 
-int main() {
-  raytrace_sphere();
+int main()
+{
+  // raytrace_sphere();
   raytrace_parallelogram();
-  raytrace_perspective();
-  raytrace_shading();
+  // raytrace_perspective();
+  // raytrace_shading();
 
   return 0;
 }
