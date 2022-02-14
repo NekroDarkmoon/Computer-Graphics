@@ -144,12 +144,12 @@ void raytrace_parallelogram()
       if (intersects(ray_origin, ray_direction, pgram_origin, pgram_u,
                      pgram_v, intersection))
       {
-        // TODO: The ray hit the parallelogram, compute the exact intersection
+        // The ray hit the parallelogram, compute the exact intersection
         // point
         Vector3d ray_intersection = intersection;
 
-        // TODO: Compute normal at the intersection point
-        Vector3d ray_normal = ray_intersection.normalized();
+        // Compute normal at the intersection point
+        const Vector3d ray_normal = pgram_v.cross(pgram_u).normalized();
 
         // Simple diffuse model
         C(i, j) = (light_position - ray_intersection).normalized().transpose() *
@@ -187,7 +187,7 @@ void raytrace_perspective()
   const Vector3d x_displacement(2.0 / C.cols(), 0, 0);
   const Vector3d y_displacement(0, -2.0 / C.rows(), 0);
 
-  // TODO: Parameters of the parallelogram (position of the lower-left corner +
+  // Parameters of the parallelogram (position of the lower-left corner +
   // two sides)
   const Vector3d pgram_origin(-0.5, -0.5, 0);
   const Vector3d pgram_u(0, 0.7, -10);
@@ -202,19 +202,21 @@ void raytrace_perspective()
     {
       const Vector3d pixel_center = image_origin + double(i) * x_displacement + double(j) * y_displacement;
 
-      // TODO: Prepare the ray (origin point and direction)
-      const Vector3d ray_origin = pixel_center;
-      const Vector3d ray_direction = camera_view_direction;
+      // Prepare the ray (origin point and direction)
+      const Vector3d ray_origin = camera_origin;
+      const Vector3d ray_direction = pixel_center - ray_origin;
+      Vector3d intersection;
 
-      // TODO: Check if the ray intersects with the parallelogram
-      if (true)
+      // Check if the ray intersects with the parallelogram
+      if (intersects(ray_origin, ray_direction, pgram_origin, pgram_u,
+                     pgram_v, intersection))
       {
-        // TODO: The ray hit the parallelogram, compute the exact intersection
+        // The ray hit the parallelogram, compute the exact intersection
         // point
-        Vector3d ray_intersection(0, 0, 0);
+        const Vector3d ray_intersection = intersection;
 
-        // TODO: Compute normal at the intersection point
-        Vector3d ray_normal = ray_intersection.normalized();
+        // Compute normal at the intersection point
+        const Vector3d ray_normal = pgram_v.cross(pgram_u).normalized();
 
         // Simple diffuse model
         C(i, j) = (light_position - ray_intersection).normalized().transpose() *
@@ -311,8 +313,8 @@ void raytrace_shading()
 int main()
 {
   // raytrace_sphere();
-  raytrace_parallelogram();
-  // raytrace_perspective();
+  // raytrace_parallelogram();
+  raytrace_perspective();
   // raytrace_shading();
 
   return 0;
