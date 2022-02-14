@@ -325,27 +325,23 @@ void raytrace_shading()
         // Compute normal at the intersection point
         const Vector3d ray_normal = ((ray_intersection - sphere_center) / sphere_radius).normalized();
 
-        // TODO: Add shading parameter here
-        const double diffuseR = (light_position - ray_intersection).normalized().dot(ray_normal) * diffuse_color(0);
-        const double diffuseG = (light_position - ray_intersection).normalized().dot(ray_normal) * diffuse_color(1);
-        const double diffuseB = (light_position - ray_intersection).normalized().dot(ray_normal) * diffuse_color(2);
+        // Add shading parameter here
+        const double diffuseR = fmax(0, (light_position - ray_intersection).normalized().dot(ray_normal)) * diffuse_color(0);
+        const double diffuseG = fmax(0, (light_position - ray_intersection).normalized().dot(ray_normal)) * diffuse_color(1);
+        const double diffuseB = fmax(0, (light_position - ray_intersection).normalized().dot(ray_normal)) * diffuse_color(2);
 
         const Vector3d v = (camera_origin - ray_intersection).normalized();
         const Vector3d l = (light_position - ray_intersection).normalized();
         const Vector3d h = (v + l);
 
-        const double specularR = pow((h).normalized().dot(ray_normal), specular_exponent) * specular_color(0);
-        const double specularG = pow((h).normalized().dot(ray_normal), specular_exponent) * specular_color(1);
-        const double specularB = pow((h).normalized().dot(ray_normal), specular_exponent) * specular_color(2);
-
-        // const double specularR = (light_position - ray_intersection).normalized().dot(ray_normal) * specular_color(0);
-        // const double specularG = (light_position - ray_intersection).normalized().dot(ray_normal) * specular_color(1);
-        // const double specularB = (light_position - ray_intersection).normalized().dot(ray_normal) * specular_color(2);
+        const double specularR = fmax(0, pow((h).normalized().dot(ray_normal), specular_exponent)) * specular_color(0);
+        const double specularG = fmax(0, pow((h).normalized().dot(ray_normal), specular_exponent)) * specular_color(1);
+        const double specularB = fmax(0, pow((h).normalized().dot(ray_normal), specular_exponent)) * specular_color(2);
 
         // Simple diffuse model
-        CR(i, j) = ambient + fmax(0, diffuseR) + fmax(0, specularR);
-        CG(i, j) = ambient + fmax(0, diffuseG) + fmax(0, specularG);
-        CB(i, j) = ambient + fmax(0, diffuseB) + fmax(0, specularB);
+        CR(i, j) = ambient + 1.5 * diffuseR + 1.5 * specularR;
+        CG(i, j) = ambient + 1.5 * diffuseG + 1.5 * specularG;
+        CB(i, j) = ambient + 1.5 * diffuseB + 1.5 * specularB;
 
         // Clamp to zero
         CR(i, j) = std::max(CR(i, j), 0.);
