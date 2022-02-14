@@ -9,6 +9,7 @@
     "Eigen"
   ],
   "files.associations": {
-    "core": "cpp"
+    "core": "cpp",
+    "cmath": "cpp"
   },
 }

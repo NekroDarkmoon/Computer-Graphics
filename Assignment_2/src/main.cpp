@@ -277,8 +277,10 @@ void raytrace_shading()
             << std::endl;
 
   const std::string filename("shading.png");
-  MatrixXd C = MatrixXd::Zero(800, 800); // Store the color
-  MatrixXd A = MatrixXd::Zero(800, 800); // Store the alpha mask
+  MatrixXd CR = MatrixXd::Zero(800, 800); // Store red color
+  MatrixXd CG = MatrixXd::Zero(800, 800); // Store green color
+  MatrixXd CB = MatrixXd::Zero(800, 800); // Store blue color
+  MatrixXd A = MatrixXd::Zero(800, 800);  // Store the alpha mask
 
   const Vector3d camera_origin(0, 0, 3);
   const Vector3d camera_view_direction(0, 0, -1);
@@ -292,7 +294,7 @@ void raytrace_shading()
   const Vector3d sphere_center(0, 0, 0);
   const double sphere_radius = 0.9;
 
-  // material params
+  // Material Params
   const Vector3d diffuse_color(1, 0, 1);
   const double specular_exponent = 100;
   const Vector3d specular_color(0., 0, 1);
@@ -301,9 +303,9 @@ void raytrace_shading()
   const Vector3d light_position(-1, 1, 1);
   double ambient = 0.1;
 
-  for (unsigned i = 0; i < C.cols(); ++i)
+  for (unsigned i = 0; i < CR.cols(); ++i)
   {
-    for (unsigned j = 0; j < C.rows(); ++j)
+    for (unsigned j = 0; j < CR.rows(); ++j)
     {
       const Vector3d pixel_center = image_origin + double(i) * x_displacement + double(j) * y_displacement;
       // Prepare the ray
@@ -324,14 +326,31 @@ void raytrace_shading()
         const Vector3d ray_normal = ((ray_intersection - sphere_center) / sphere_radius).normalized();
 
         // TODO: Add shading parameter here
-        const double diffuse = (light_position - ray_intersection).normalized().dot(ray_normal);
-        const double specular = (light_position - ray_intersection).normalized().dot(ray_normal);
+        const double diffuseR = (light_position - ray_intersection).normalized().dot(ray_normal) * diffuse_color(0);
+        const double diffuseG = (light_position - ray_intersection).normalized().dot(ray_normal) * diffuse_color(1);
+        const double diffuseB = (light_position - ray_intersection).normalized().dot(ray_normal) * diffuse_color(2);
+
+        const Vector3d v = (camera_origin - ray_intersection).normalized();
+        const Vector3d l = (light_position - ray_intersection).normalized();
+        const Vector3d h = (v + l);
+
+        const double specularR = pow((h).normalized().dot(ray_normal), specular_exponent) * specular_color(0);
+        const double specularG = pow((h).normalized().dot(ray_normal), specular_exponent) * specular_color(1);
+        const double specularB = pow((h).normalized().dot(ray_normal), specular_exponent) * specular_color(2);
+
+        // const double specularR = (light_position - ray_intersection).normalized().dot(ray_normal) * specular_color(0);
+        // const double specularG = (light_position - ray_intersection).normalized().dot(ray_normal) * specular_color(1);
+        // const double specularB = (light_position - ray_intersection).normalized().dot(ray_normal) * specular_color(2);
 
         // Simple diffuse model
-        C(i, j) = ambient + diffuse + specular;
+        CR(i, j) = ambient + fmax(0, diffuseR) + fmax(0, specularR);
+        CG(i, j) = ambient + fmax(0, diffuseG) + fmax(0, specularG);
+        CB(i, j) = ambient + fmax(0, diffuseB) + fmax(0, specularB);
 
         // Clamp to zero
-        C(i, j) = std::max(C(i, j), 0.);
+        CR(i, j) = std::max(CR(i, j), 0.);
+        CG(i, j) = std::max(CG(i, j), 0.);
+        CB(i, j) = std::max(CB(i, j), 0.);
 
         // Disable the alpha mask for this pixel
         A(i, j) = 1;
@@ -340,7 +359,7 @@ void raytrace_shading()
   }
 
   // Save to png
-  write_matrix_to_png(C, C, C, A, filename);
+  write_matrix_to_png(CR, CG, CB, A, filename);
 }
 
 int main()
