@@ -235,6 +235,42 @@ void raytrace_perspective()
   write_matrix_to_png(C, C, C, A, filename);
 }
 
+// Helper functions for raytrace_shading
+inline bool sphereIntersects(const Vector3d ray_origin, const Vector3d ray_direction,
+                             const Vector3d sphere_center, const double sphere_radius,
+                             double t)
+{
+  // Set up variables
+  double x0, x1;
+  Vector3d length = ray_origin - sphere_center;
+  double a = ray_direction.dot(ray_direction);
+  double b = ray_direction.dot(length) * 2;
+  double c = length.dot(length) - sphere_radius;
+
+  // Solve quadratic equation using numberically stable formula
+  double discrim = (b * b) - (4 * a * c);
+  if (discrim < 0)
+    return false;
+  else if (discrim == 0)
+    x0 = x1 = -0.5 * (b / a);
+  else
+  {
+    double x = (b > 0) ? (-0.5 * (b + sqrt(discrim))) : (-0.5 * (b - sqrt(discrim)));
+    x0 = x / a;
+    x1 = c / x;
+  }
+
+  if (x0 > x1)
+    std::swap(x0, x1);
+  if (x0 < 0 && x1 < 0)
+    return false;
+  if (x0 < 0)
+    x0 = x1;
+
+  t = x0;
+  return true;
+}
+
 void raytrace_shading()
 {
   std::cout << "Simple ray tracer, one sphere with different shading"
@@ -271,24 +307,21 @@ void raytrace_shading()
     {
       const Vector3d pixel_center = image_origin + double(i) * x_displacement + double(j) * y_displacement;
       // Prepare the ray
-      const Vector3d ray_origin = pixel_center;
-      const Vector3d ray_direction = camera_view_direction;
+      const Vector3d ray_origin = camera_origin;
+      const Vector3d ray_direction = pixel_center - ray_origin;
 
       // Intersect with the sphere
-      // NOTE: this is a special case of a sphere centered in the origin and for
-      // orthographic rays aligned with the z axis
-      Vector2d ray_on_xy(ray_origin(0), ray_origin(1));
-      const double sphere_radius = 0.9;
+      double t;
+      const bool isIntersecting = sphereIntersects(ray_origin, ray_direction, sphere_center,
+                                                   sphere_radius, t);
 
-      if (ray_on_xy.norm() < sphere_radius)
+      if (isIntersecting)
       {
         // The ray hit the sphere, compute the exact intersection point
-        Vector3d ray_intersection(
-            ray_on_xy(0), ray_on_xy(1),
-            sqrt(sphere_radius * sphere_radius - ray_on_xy.squaredNorm()));
+        const Vector3d ray_intersection = ray_origin - (t * ray_direction);
 
         // Compute normal at the intersection point
-        Vector3d ray_normal = ray_intersection.normalized();
+        const Vector3d ray_normal = ((ray_intersection - sphere_center) / sphere_radius).normalized();
 
         // TODO: Add shading parameter here
         const double diffuse = (light_position - ray_intersection).normalized().dot(ray_normal);
@@ -314,8 +347,8 @@ int main()
 {
   // raytrace_sphere();
   // raytrace_parallelogram();
-  raytrace_perspective();
-  // raytrace_shading();
+  // raytrace_perspective();
+  raytrace_shading();
 
   return 0;
 }
