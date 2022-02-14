@@ -8,4 +8,7 @@
   "cSpell.words": [
     "Eigen"
   ],
+  "files.associations": {
+    "core": "cpp"
+  },
 }
