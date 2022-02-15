@@ -360,9 +360,9 @@ void raytrace_shading()
 
 int main()
 {
-  // raytrace_sphere();
-  // raytrace_parallelogram();
-  // raytrace_perspective();
+  raytrace_sphere();
+  raytrace_parallelogram();
+  raytrace_perspective();
   raytrace_shading();
 
   return 0;
