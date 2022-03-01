@@ -427,10 +427,9 @@ void raytrace_scene()
     // The camera always points in the direction -z
     // The sensor grid is at a distance 'focal_length' from the camera center,
     // and covers an viewing angle given by 'field_of_view'.
-    // TODO: Fix distance
     double aspect_ratio = double(w) / double(h);
-    double image_y = focal_length * tan(field_of_view); // Compute the correct pixels size
-    double image_x = image_y * aspect_ratio;            // Compute the correct pixels size
+    double image_y = focal_length * tan(field_of_view / 2); // Compute the correct pixels size
+    double image_x = image_y * aspect_ratio;                // Compute the correct pixels size
 
     // The pixel grid through which we shoot rays is at a distance 'focal_length'
     const Vector3d image_origin(-image_x, image_y, -image_z);
@@ -450,7 +449,7 @@ void raytrace_scene()
 
             if (is_perspective)
             {
-                // TODO: Perspective camera
+                // Perspective camera
                 ray_origin = camera_position;
                 ray_direction = pixel_center - ray_origin;
             }
