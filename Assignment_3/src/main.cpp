@@ -363,6 +363,7 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, in
         // TODO: Shoot a shadow ray to determine if the light should affect the intersection point and call is_light_visible
 
         Vector4d diff_color = obj_diffuse_color;
+        Vector4d spec_color = obj_specular_color;
 
         if (nearest_object == 4)
         {
@@ -381,8 +382,9 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, in
         // Diffuse contribution
         const Vector4d diffuse = diff_color * std::max(Li.dot(N), 0.0);
 
-        // Specular contribution, use obj_specular_color
-        const Vector4d specular(0, 0, 0, 0);
+        const Vector3d Vi = (camera_position - p).normalized();
+        const Vector3d bisec = ((Li.dot(Li) * Vi) + (Vi.dot(Vi) * Li)).normalized();
+        const Vector4d specular = spec_color * pow(std::max(bisec.dot(N), 0.0), obj_specular_exponent);
 
         // Attenuate lights according to the squared distance to the lights
         const Vector3d D = light_position - p;
