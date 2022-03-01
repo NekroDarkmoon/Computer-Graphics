@@ -21,14 +21,14 @@ using namespace Eigen;
 
 const std::string filename("raytrace.png");
 
-//Camera settings
+// Camera settings
 const double focal_length = 10;
-const double field_of_view = 0.7854; //45 degrees
+const double field_of_view = 0.7854; // 45 degrees
 const double image_z = 5;
 const bool is_perspective = false;
 const Vector3d camera_position(0, 0, 5);
 
-//Maximum number of recursive calls
+// Maximum number of recursive calls
 const int max_bounce = 5;
 
 // Objects
@@ -36,7 +36,7 @@ std::vector<Vector3d> sphere_centers;
 std::vector<double> sphere_radii;
 std::vector<Matrix3d> parallelograms;
 
-//Material for the object, same material for all objects
+// Material for the object, same material for all objects
 const Vector4d obj_ambient_color(0.5, 0.1, 0.1, 0);
 const Vector4d obj_diffuse_color(0.5, 0.5, 0.5, 0);
 const Vector4d obj_specular_color(0.2, 0.2, 0.2, 0);
@@ -48,13 +48,13 @@ const Vector4d obj_refraction_color(0.7, 0.7, 0.7, 0);
 const int grid_size = 20;
 std::vector<std::vector<Vector2d>> grid;
 
-//Lights
+// Lights
 std::vector<Vector3d> light_positions;
 std::vector<Vector4d> light_colors;
-//Ambient light
+// Ambient light
 const Vector4d ambient_light(0.2, 0.2, 0.2, 0);
 
-//Fills the different arrays
+// Fills the different arrays
 void setup_scene()
 {
     grid.resize(grid_size + 1);
@@ -65,7 +65,7 @@ void setup_scene()
             grid[i][j] = Vector2d::Random().normalized();
     }
 
-    //Spheres
+    // Spheres
     sphere_centers.emplace_back(10, 0, 1);
     sphere_radii.emplace_back(1);
 
@@ -87,13 +87,13 @@ void setup_scene()
     sphere_centers.emplace_back(-8, 1.6, 1);
     sphere_radii.emplace_back(1);
 
-    //parallelograms
+    // parallelograms
     parallelograms.emplace_back();
     parallelograms.back() << -100, 100, -100,
         -1.25, 0, -1.2,
         -100, -100, 100;
 
-    //Lights
+    // Lights
     light_positions.emplace_back(8, 8, 0);
     light_colors.emplace_back(16, 16, 16, 0);
 
@@ -116,7 +116,7 @@ void setup_scene()
     light_colors.emplace_back(16, 16, 16, 0);
 }
 
-//We need to make this function visible
+// We need to make this function visible
 Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, int max_bounce);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -129,22 +129,22 @@ double lerp(double a0, double a1, double w)
 {
     assert(w >= 0);
     assert(w <= 1);
-    //TODO implement linear and cubic interpolation
+    // TODO implement linear and cubic interpolation
     return 0;
 }
 
 // Computes the dot product of the distance and gradient vectors.
 double dotGridGradient(int ix, int iy, double x, double y)
 {
-    //TODO: Compute the distance vector
-    //TODO: Compute and return the dot-product
+    // TODO: Compute the distance vector
+    // TODO: Compute and return the dot-product
     return 0;
 }
 
 // Compute Perlin noise at coordinates x, y
 double perlin(double x, double y)
 {
-    //TODO: Determine grid cell coordinates x0, y0
+    // TODO: Determine grid cell coordinates x0, y0
     int x0 = 0;
     int x1 = x0 + 1;
     int y0 = 0;
@@ -177,11 +177,11 @@ Vector4d procedural_texture(const double tu, const double tv)
     assert(tu <= 1);
     assert(tv <= 1);
 
-    //TODO: uncomment these lines once you implement the perlin noise
-    // const double color = (perlin(tu * grid_size, tv * grid_size) + 1) / 2;
-    // return Vector4d(0, color, 0, 0);
+    // TODO: uncomment these lines once you implement the perlin noise
+    //  const double color = (perlin(tu * grid_size, tv * grid_size) + 1) / 2;
+    //  return Vector4d(0, color, 0, 0);
 
-    //Example fo checkerboard texture
+    // Example fo checkerboard texture
     const double color = (int(tu * grid_size) + int(tv * grid_size)) % 2 == 0 ? 0 : 1;
     return Vector4d(0, color, 0, 0);
 }
@@ -190,11 +190,11 @@ Vector4d procedural_texture(const double tu, const double tv)
 // Intersection code
 ////////////////////////////////////////////////////////////////////////////////
 
-//Compute the intersection between a ray and a sphere, return -1 if no intersection
+// Compute the intersection between a ray and a sphere, return -1 if no intersection
 double ray_sphere_intersection(const Vector3d &ray_origin, const Vector3d &ray_direction, int index, Vector3d &p, Vector3d &N)
 {
     // TODO, implement the intersection between the ray and the sphere at index index.
-    //return t or -1 if no intersection
+    // return t or -1 if no intersection
 
     const Vector3d sphere_center = sphere_centers[index];
     const double sphere_radius = sphere_radii[index];
@@ -207,7 +207,7 @@ double ray_sphere_intersection(const Vector3d &ray_origin, const Vector3d &ray_d
     }
     else
     {
-        //TODO set the correct intersection point, update p to the correct value
+        // TODO set the correct intersection point, update p to the correct value
         p = ray_origin;
         N = ray_direction;
 
@@ -217,11 +217,11 @@ double ray_sphere_intersection(const Vector3d &ray_origin, const Vector3d &ray_d
     return -1;
 }
 
-//Compute the intersection between a ray and a paralleogram, return -1 if no intersection
+// Compute the intersection between a ray and a paralleogram, return -1 if no intersection
 double ray_parallelogram_intersection(const Vector3d &ray_origin, const Vector3d &ray_direction, int index, Vector3d &p, Vector3d &N)
 {
     // TODO, implement the intersection between the ray and the parallelogram at index index.
-    //return t or -1 if no intersection
+    // return t or -1 if no intersection
 
     const Vector3d pgram_origin = parallelograms[index].col(0);
     const Vector3d A = parallelograms[index].col(1);
@@ -234,31 +234,31 @@ double ray_parallelogram_intersection(const Vector3d &ray_origin, const Vector3d
         return -1;
     }
 
-    //TODO set the correct intersection point, update p and N to the correct values
+    // TODO set the correct intersection point, update p and N to the correct values
     p = ray_origin;
     N = p.normalized();
 
     return -1;
 }
 
-//Finds the closest intersecting object returns its index
-//In case of intersection it writes into p and N (intersection point and normals)
+// Finds the closest intersecting object returns its index
+// In case of intersection it writes into p and N (intersection point and normals)
 int find_nearest_object(const Vector3d &ray_origin, const Vector3d &ray_direction, Vector3d &p, Vector3d &N)
 {
     // Find the object in the scene that intersects the ray first
     // we store the index and the 'closest_t' to their expected values
     int closest_index = -1;
-    double closest_t = std::numeric_limits<double>::max(); //closest t is "+ infinity"
+    double closest_t = std::numeric_limits<double>::max(); // closest t is "+ infinity"
 
     Vector3d tmp_p, tmp_N;
     for (int i = 0; i < sphere_centers.size(); ++i)
     {
-        //returns t and writes on tmp_p and tmp_N
+        // returns t and writes on tmp_p and tmp_N
         const double t = ray_sphere_intersection(ray_origin, ray_direction, i, tmp_p, tmp_N);
-        //We have intersection
+        // We have intersection
         if (t >= 0)
         {
-            //The point is before our current closest t
+            // The point is before our current closest t
             if (t < closest_t)
             {
                 closest_index = i;
@@ -271,12 +271,12 @@ int find_nearest_object(const Vector3d &ray_origin, const Vector3d &ray_directio
 
     for (int i = 0; i < parallelograms.size(); ++i)
     {
-        //returns t and writes on tmp_p and tmp_N
+        // returns t and writes on tmp_p and tmp_N
         const double t = ray_parallelogram_intersection(ray_origin, ray_direction, i, tmp_p, tmp_N);
-        //We have intersection
+        // We have intersection
         if (t >= 0)
         {
-            //The point is before our current closest t
+            // The point is before our current closest t
             if (t < closest_t)
             {
                 closest_index = sphere_centers.size() + i;
@@ -294,7 +294,7 @@ int find_nearest_object(const Vector3d &ray_origin, const Vector3d &ray_directio
 // Raytracer code
 ////////////////////////////////////////////////////////////////////////////////
 
-//Checks if the light is visible
+// Checks if the light is visible
 bool is_light_visible(const Vector3d &ray_origin, const Vector3d &ray_direction, const Vector3d &light_position)
 {
     // TODO: Determine if the light is visible here
@@ -304,7 +304,7 @@ bool is_light_visible(const Vector3d &ray_origin, const Vector3d &ray_direction,
 
 Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, int max_bounce)
 {
-    //Intersection point and normal, these are output of find_nearest_object
+    // Intersection point and normal, these are output of find_nearest_object
     Vector3d p, N;
 
     const int nearest_object = find_nearest_object(ray_origin, ray_direction, p, N);
@@ -333,7 +333,7 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, in
 
         if (nearest_object == 4)
         {
-            //Compute UV coodinates for the point on the sphere
+            // Compute UV coodinates for the point on the sphere
             const double x = p(0) - sphere_centers[nearest_object][0];
             const double y = p(1) - sphere_centers[nearest_object][1];
             const double z = p(2) - sphere_centers[nearest_object][2];
@@ -372,7 +372,7 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, in
     // Rendering equation
     Vector4d C = ambient_color + lights_color + reflection_color + refraction_color;
 
-    //Set alpha to 1
+    // Set alpha to 1
     C(3) = 1;
 
     return C;
@@ -395,8 +395,8 @@ void raytrace_scene()
     // The sensor grid is at a distance 'focal_length' from the camera center,
     // and covers an viewing angle given by 'field_of_view'.
     double aspect_ratio = double(w) / double(h);
-    double image_y = 1; //TODO: compute the correct pixels size
-    double image_x = 1; //TODO: compute the correct pixels size
+    double image_y = 1; // TODO: compute the correct pixels size
+    double image_x = 1; // TODO: compute the correct pixels size
 
     // The pixel grid through which we shoot rays is at a distance 'focal_length'
     const Vector3d image_origin(-image_x, image_y, -image_z);
