@@ -193,34 +193,55 @@ Vector4d procedural_texture(const double tu, const double tv)
 // Compute the intersection between a ray and a sphere, return -1 if no intersection
 double ray_sphere_intersection(const Vector3d &ray_origin, const Vector3d &ray_direction, int index, Vector3d &p, Vector3d &N)
 {
-    // TODO: implement the intersection between the ray and the sphere at index index.
+    // Implement the intersection between the ray and the sphere at index index.
     // return t or -1 if no intersection
 
+    // Variables Set up
     const Vector3d sphere_center = sphere_centers[index];
     const double sphere_radius = sphere_radii[index];
-
     double t = -1;
 
-    if (false)
-    {
+    double x0, x1;
+    Vector3d length = ray_origin - sphere_center;
+    double a = ray_direction.dot(ray_direction);
+    double b = ray_direction.dot(length) * 2;
+    double c = length.dot(length) - sphere_radius;
+
+    // Solve quadratic using numerically stable formula
+    double discrim = (b * b) - (4 * a * c);
+    if (discrim < 0)
         return -1;
-    }
+    else if (discrim == 0)
+        x0 = x1 = -0.5 * (b / a);
     else
     {
-        // TODO: set the correct intersection point, update p to the correct value
-        p = ray_origin;
-        N = ray_direction;
-
-        return t;
+        double x = (b > 0) ? (-0.5 * (b + sqrt(discrim))) : (-0.5 * (b - sqrt(discrim)));
+        x0 = x / a;
+        x1 = c / x;
     }
 
-    return -1;
+    if (x0 > x1)
+        std::swap(x0, x1);
+
+    if (x0 < 0 && x1 < 0)
+        return -1;
+
+    if (x0 < 0)
+        x0 = x1;
+
+    t = x0;
+
+    // Set the correct intersection point, update p to the correct value
+    p = ray_origin + (t * ray_direction);
+    N = ((p - sphere_center) / sphere_radius).normalized();
+
+    return t;
 }
 
 // Compute the intersection between a ray and a paralleogram, return -1 if no intersection
 double ray_parallelogram_intersection(const Vector3d &ray_origin, const Vector3d &ray_direction, int index, Vector3d &p, Vector3d &N)
 {
-    // TODO: implement the intersection between the ray and the parallelogram at index index.
+    // Implement the intersection between the ray and the parallelogram at index index.
     // return t or -1 if no intersection
 
     const Vector3d pgram_origin = parallelograms[index].col(0);
@@ -229,7 +250,7 @@ double ray_parallelogram_intersection(const Vector3d &ray_origin, const Vector3d
     const Vector3d pgram_u = A - pgram_origin;
     const Vector3d pgram_v = B - pgram_origin;
 
-    // TODO: set the correct intersection point, update p and N to the correct values
+    // Set the correct intersection point, update p and N to the correct values
 
     Vector3d P = ray_direction.cross(pgram_v);
     double det = pgram_u.dot(P);
