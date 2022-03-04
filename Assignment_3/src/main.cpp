@@ -129,25 +129,31 @@ double lerp(double a0, double a1, double w)
 {
     assert(w >= 0);
     assert(w <= 1);
-    // TODO: implement linear and cubic interpolation
-    return 0;
+    // Linear Interpolation
+    return a0 + (w * (a1 - a0));
+
+    // Cubic Interpolation
+    // return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
 }
 
 // Computes the dot product of the distance and gradient vectors.
 double dotGridGradient(int ix, int iy, double x, double y)
 {
-    // TODO: Compute the distance vector
-    // TODO: Compute and return the dot-product
-    return 0;
+    // Compute the distance vector
+    double dx = x - ix;
+    double dy = y - iy;
+
+    // Compute and return the dot-product
+    return ((dx * grid[ix][iy][0]) + (dy * grid[iy][ix][1]));
 }
 
 // Compute Perlin noise at coordinates x, y
 double perlin(double x, double y)
 {
-    // TODO: Determine grid cell coordinates x0, y0
-    int x0 = 0;
+    // Determine grid cell coordinates x0, y0
+    int x0 = int(x);
     int x1 = x0 + 1;
-    int y0 = 0;
+    int y0 = int(y);
     int y1 = y0 + 1;
 
     // Determine interpolation weights
@@ -177,13 +183,13 @@ Vector4d procedural_texture(const double tu, const double tv)
     assert(tu <= 1);
     assert(tv <= 1);
 
-    // TODO: uncomment these lines once you implement the perlin noise
-    //  const double color = (perlin(tu * grid_size, tv * grid_size) + 1) / 2;
-    //  return Vector4d(0, color, 0, 0);
+    // Uncomment these lines once you implement the perlin noise
+    const double color = (perlin(tu * grid_size, tv * grid_size) + 1) / 2;
+    return Vector4d(0, color, 0, 0);
 
     // Example fo checkerboard texture
-    const double color = (int(tu * grid_size) + int(tv * grid_size)) % 2 == 0 ? 0 : 1;
-    return Vector4d(0, color, 0, 0);
+    // const double color = (int(tu * grid_size) + int(tv * grid_size)) % 2 == 0 ? 0 : 1;
+    // return Vector4d(0, color, 0, 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -396,7 +402,7 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, in
             diff_color = procedural_texture(tu, tv);
         }
 
-        // TODO: Add shading parameters
+        // Add shading parameters
 
         // Diffuse contribution
         Vector4d diffuse = diff_color * std::max(Li.dot(N), 0.0);
@@ -413,16 +419,15 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, in
     Vector4d refl_color = obj_reflection_color;
 
     if (nearest_object == 4)
-    {
         refl_color = Vector4d(0.5, 0.5, 0.5, 0);
-    }
-    // TODO: Compute the color of the reflected ray and add its contribution to the current point color.
-    // use refl_color
-    const Vector3d Vi = (p - camera_position).normalized();
-    const Vector3d refl_direction = Vi - (2 * Vi.dot(N) * N);
-    const Vector3d e = refl_direction * 0.00001;
 
+    // Compute the color of the reflected ray and add its contribution to the current point color.
+    // use refl_color
+    const Vector3d refl_direction = ray_direction - (2 * ray_direction.dot(N) * N);
+    const Vector3d e = refl_direction * 0.00001;
     Vector4d reflection_color = refl_color;
+
+    // Re-bounce till max_depth has been reached
 
     if (max_bounce > 0)
         reflection_color = refl_color.cwiseProduct(shoot_ray(p + e, refl_direction, max_bounce - 1));
