@@ -130,10 +130,10 @@ double lerp(double a0, double a1, double w)
     assert(w >= 0);
     assert(w <= 1);
     // Linear Interpolation
-    return a0 + (w * (a1 - a0));
+    // return a0 + (w * (a1 - a0));
 
     // Cubic Interpolation
-    // return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
+    return (a1 - a0) * (3.0 - w * 2.0) * w * w + a0;
 }
 
 // Computes the dot product of the distance and gradient vectors.
