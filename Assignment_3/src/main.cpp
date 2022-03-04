@@ -332,15 +332,21 @@ bool is_light_visible(const Vector3d &ray_origin, const Vector3d &ray_direction,
                       const Vector3d &light_position)
 {
     // Determine if the light is visible here
-    // Use find_nearest_object
     Vector3d p, N;
 
     // Create Epsilon
     Vector3d e = ray_direction * 0.00001;
     const int nearest_object = find_nearest_object(ray_origin + e, ray_direction, p, N);
 
-    // Check if anything intersects
+    // Check if nothing intersects
     if (nearest_object < 0)
+        return true;
+
+    // Check if behind light
+    double inter_dist = (ray_origin - p).squaredNorm();
+    double light_dist = (ray_origin - light_position).squaredNorm();
+
+    if (inter_dist >= light_dist)
         return true;
 
     return false;
@@ -405,13 +411,21 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, in
     }
 
     Vector4d refl_color = obj_reflection_color;
+
     if (nearest_object == 4)
     {
         refl_color = Vector4d(0.5, 0.5, 0.5, 0);
     }
     // TODO: Compute the color of the reflected ray and add its contribution to the current point color.
     // use refl_color
-    Vector4d reflection_color(0, 0, 0, 0);
+    const Vector3d Vi = (p - camera_position).normalized();
+    const Vector3d refl_direction = Vi - (2 * Vi.dot(N) * N);
+    const Vector3d e = refl_direction * 0.00001;
+
+    Vector4d reflection_color = refl_color;
+
+    if (max_bounce > 0)
+        reflection_color = refl_color.cwiseProduct(shoot_ray(p + e, refl_direction, max_bounce - 1));
 
     // TODO: Compute the color of the refracted ray and add its contribution to the current point color.
     //       Make sure to check for total internal reflection before shooting a new ray.
