@@ -328,11 +328,22 @@ int find_nearest_object(const Vector3d &ray_origin, const Vector3d &ray_directio
 ////////////////////////////////////////////////////////////////////////////////
 
 // Checks if the light is visible
-bool is_light_visible(const Vector3d &ray_origin, const Vector3d &ray_direction, const Vector3d &light_position)
+bool is_light_visible(const Vector3d &ray_origin, const Vector3d &ray_direction,
+                      const Vector3d &light_position)
 {
-    // TODO: Determine if the light is visible here
+    // Determine if the light is visible here
     // Use find_nearest_object
-    return true;
+    Vector3d p, N;
+
+    // Create Epsilon
+    Vector3d e = ray_direction * 0.00001;
+    const int nearest_object = find_nearest_object(ray_origin + e, ray_direction, p, N);
+
+    // Check if anything intersects
+    if (nearest_object < 0)
+        return true;
+
+    return false;
 }
 
 Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, int max_bounce)
@@ -360,14 +371,16 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, in
 
         const Vector3d Li = (light_position - p).normalized();
 
-        // TODO: Shoot a shadow ray to determine if the light should affect the intersection point and call is_light_visible
+        // Shoot a shadow ray to determine if the light should affect the intersection point and call is_light_visible
+        if (!is_light_visible(p, (light_position - p), light_position))
+            continue;
 
         Vector4d diff_color = obj_diffuse_color;
         Vector4d spec_color = obj_specular_color;
 
         if (nearest_object == 4)
         {
-            // Compute UV coodinates for the point on the sphere
+            // Compute UV coordinates for the point on the sphere
             const double x = p(0) - sphere_centers[nearest_object][0];
             const double y = p(1) - sphere_centers[nearest_object][1];
             const double z = p(2) - sphere_centers[nearest_object][2];
@@ -380,11 +393,11 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, in
         // TODO: Add shading parameters
 
         // Diffuse contribution
-        const Vector4d diffuse = diff_color * std::max(Li.dot(N), 0.0);
+        Vector4d diffuse = diff_color * std::max(Li.dot(N), 0.0);
 
         const Vector3d Vi = (camera_position - p).normalized();
         const Vector3d bisec = ((Li.dot(Li) * Vi) + (Vi.dot(Vi) * Li)).normalized();
-        const Vector4d specular = spec_color * pow(std::max(bisec.dot(N), 0.0), obj_specular_exponent);
+        Vector4d specular = spec_color * pow(std::max(bisec.dot(N), 0.0), obj_specular_exponent);
 
         // Attenuate lights according to the squared distance to the lights
         const Vector3d D = light_position - p;
