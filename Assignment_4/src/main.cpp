@@ -137,6 +137,29 @@ AlignedBox3d bbox_from_triangle(const Vector3d &a, const Vector3d &b, const Vect
   return box;
 }
 
+AABBTree::Node build_tree(const MatrixXi &F, const MatrixXd &V,
+                          const MatrixXd &centroids, const std::vector<int> idx,
+                          std::vector<AABBTree::Node> &nodes)
+{
+  // Base case
+  if (idx.size < 2)
+  {
+    // Create leaf node and return
+    return
+  }
+
+  // Divide indicies into 2
+  std::vector<int> ida(idx.begin(), idx.begin() + (idx.size() / 2));
+  std::vector<int> idb(idx.begin() + (idx.size() / 2), idx.end());
+
+  nodes.emplace_back();
+  AABBTree::Node &node = nodes.back();
+  node.left = build_tree(F, V, centroids, ida, nodes);
+  node.right = build_tree(F, V, centroids, idb, nodes);
+
+  return null;
+}
+
 AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
 {
   // Compute the centroids of all the triangles in the input mesh
@@ -152,9 +175,30 @@ AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
   }
 
   // TODO:
-
+  // std::cout << centroids << std::endl;
   // Split each set of primitives into 2 sets of roughly equal size,
   // based on sorting the centroids along one direction or another.
+
+  // Create indicies and sort centroids
+  std::vector<int> indices(centroids.rows());
+  std::iota(indices.begin(), indices.end(), 0);
+
+  std::stable_sort(indices.begin(), indices.end(),
+                   [&centroids](int i1, int i2)
+                   { return centroids.row(i1)(0) < centroids.row(i2)(0); });
+
+  // std::vector<Vector3d> temp_vec;
+  // for (int i = 0; i < centroids.rows(); ++i)
+  //   temp_vec.push_back(centroids.row(i));
+
+  // for (int i = 0; i < centroids.rows(); ++i)
+  //   centroids.row(i) = temp_vec[indices[i]];
+
+  // Make nodes vector
+  std::vector<AABBTree::Node> nodes;
+
+  // Get root
+  AABBTree::Node root = build_tree(F, V, centroids, indices, nodes);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
