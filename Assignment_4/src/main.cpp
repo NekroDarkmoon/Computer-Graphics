@@ -142,10 +142,14 @@ AABBTree::Node build_tree(const MatrixXi &F, const MatrixXd &V,
                           std::vector<AABBTree::Node> &nodes)
 {
   // Base case
-  if (idx.size < 2)
+  if (idx.size() < 2)
   {
     // Create leaf node and return
-    return
+    const MatrixXi face = F.row(idx.at(0));
+    AlignedBox3d leaf = bbox_from_triangle(V.row(face.coeff(0, 0)), V.row(face.coeff(0, 0)), V.row(face.coeff(0, 0)));
+    nodes.emplace_back();
+    AABBTree::Node &node = nodes.back();
+    return node;
   }
 
   // Divide indicies into 2
@@ -157,7 +161,7 @@ AABBTree::Node build_tree(const MatrixXi &F, const MatrixXd &V,
   node.left = build_tree(F, V, centroids, ida, nodes);
   node.right = build_tree(F, V, centroids, idb, nodes);
 
-  return null;
+  return node;
 }
 
 AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
