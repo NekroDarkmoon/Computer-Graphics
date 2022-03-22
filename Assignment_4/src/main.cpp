@@ -192,7 +192,7 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
 
   // Create node
   nodes.emplace_back();
-  AABBTree::Node &node = nodes.back();
+  // AABBTree::Node &node = nodes.back();
   int idn = nodes.size() - 1;
 
   // Recurse
@@ -209,6 +209,11 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
   // Set parent attribute on children
   nodes[l].parent = idn;
   nodes[r].parent = idn;
+
+  // Set bbox & triangle
+  nodes[idn].bbox.extend(nodes[l].bbox);
+  nodes[idn].bbox.extend(nodes[r].bbox);
+  nodes[idn].triangle = -1;
 
   return idn;
 }
