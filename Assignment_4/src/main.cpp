@@ -46,7 +46,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 const std::string data_dir = DATA_DIR;
 const std::string filename("raytrace.png");
-const std::string mesh_filename(data_dir + "dodeca.off");
+const std::string mesh_filename(data_dir + "cube.off");
 
 // Camera settings
 const double focal_length = 2;
@@ -137,31 +137,37 @@ AlignedBox3d bbox_from_triangle(const Vector3d &a, const Vector3d &b, const Vect
   return box;
 }
 
-AABBTree::Node build_tree(const MatrixXi &F, const MatrixXd &V,
-                          const MatrixXd &centroids, const std::vector<int> idx,
-                          std::vector<AABBTree::Node> &nodes)
+int build_tree(const MatrixXi &F, const MatrixXd &V,
+               const MatrixXd &centroids, const std::vector<int> primIds,
+               std::vector<AABBTree::Node> &nodes)
 {
-  // Base case
-  if (idx.size() < 2)
+  // Base Case
+
+  // Create bounding box
+  AlignedBox3d bbox;
+  for (int i : primIds)
   {
-    // Create leaf node and return
-    const MatrixXi face = F.row(idx.at(0));
-    AlignedBox3d leaf = bbox_from_triangle(V.row(face.coeff(0, 0)), V.row(face.coeff(0, 0)), V.row(face.coeff(0, 0)));
-    nodes.emplace_back();
-    AABBTree::Node &node = nodes.back();
-    return node;
+    const Vector3d x(centroids.row(i)(0), centroids.row(i)(1), centroids.row(i)(2));
+    bbox.extend(x);
   }
 
-  // Divide indicies into 2
-  std::vector<int> ida(idx.begin(), idx.begin() + (idx.size() / 2));
-  std::vector<int> idb(idx.begin() + (idx.size() / 2), idx.end());
+  // Choose split axis
+  int axis;
+  if ((bbox.max().x() - bbox.min().x()) > (bbox.max().y() - bbox.min().y()) &&
+      (bbox.max().x() - bbox.min().x()) > (bbox.max().z() - bbox.min().z()))
+    axis = 0;
+  else if ((bbox.max().y() - bbox.min().y()) > (bbox.max().z() - bbox.min().z()))
+    axis = 1;
+  else
+    axis = 2;
 
-  nodes.emplace_back();
-  AABBTree::Node &node = nodes.back();
-  node.left = build_tree(F, V, centroids, ida, nodes);
-  node.right = build_tree(F, V, centroids, idb, nodes);
+  // Calculate split point
+  std::vector<int> primIdsA = {};
+  std::vector<int> primIdsB = {};
 
-  return node;
+  std::cout << axis << std::endl;
+
+  return 0;
 }
 
 AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
@@ -179,7 +185,6 @@ AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
   }
 
   // TODO:
-  // std::cout << centroids << std::endl;
   // Split each set of primitives into 2 sets of roughly equal size,
   // based on sorting the centroids along one direction or another.
 
@@ -187,22 +192,15 @@ AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
   std::vector<int> indices(centroids.rows());
   std::iota(indices.begin(), indices.end(), 0);
 
-  std::stable_sort(indices.begin(), indices.end(),
-                   [&centroids](int i1, int i2)
-                   { return centroids.row(i1)(0) < centroids.row(i2)(0); });
-
-  // std::vector<Vector3d> temp_vec;
-  // for (int i = 0; i < centroids.rows(); ++i)
-  //   temp_vec.push_back(centroids.row(i));
-
-  // for (int i = 0; i < centroids.rows(); ++i)
-  //   centroids.row(i) = temp_vec[indices[i]];
+  // std::stable_sort(indices.begin(), indices.end(),
+  //                  [&centroids](int i1, int i2)
+  //                  { return centroids.row(i1)(0) < centroids.row(i2)(0); });
 
   // Make nodes vector
   std::vector<AABBTree::Node> nodes;
 
   // Get root
-  AABBTree::Node root = build_tree(F, V, centroids, indices, nodes);
+  int root = build_tree(F, V, centroids, indices, nodes);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
