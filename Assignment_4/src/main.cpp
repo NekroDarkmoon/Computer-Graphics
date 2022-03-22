@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <queue>
 #include <limits>
 #include <fstream>
 #include <algorithm>
@@ -46,7 +47,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 const std::string data_dir = DATA_DIR;
 const std::string filename("raytrace.png");
-const std::string mesh_filename(data_dir + "cube.off");
+const std::string mesh_filename(data_dir + "bunny.off");
 
 // Camera settings
 const double focal_length = 2;
@@ -244,12 +245,13 @@ AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
 
   // Build tree
   build_tree(F, V, centroids, indices, nodes);
+  this->nodes = nodes;
 
   // Print tree
   int x = 0;
   for (auto n : nodes)
   {
-    int leaf = (n.left && n.right);
+    int leaf = (n.left == -1 && n.right == -1);
     std::cout << x++ << " " << n.parent << " " << n.left << " " << n.right << " "
               << leaf << std::endl;
   }
@@ -332,30 +334,77 @@ bool find_nearest_object(const Vector3d &ray_origin, const Vector3d &ray_directi
   // Method (1): Traverse every triangle and return the closest hit.
   // Method (2): Traverse the BVH tree and test the intersection with a
   // triangles at the leaf nodes that intersects the input ray.
-  for (int i = 0; i < facets.rows(); ++i)
+  // for (int i = 0; i < facets.rows(); ++i)
+  // {
+  //   const Vector3d a = vertices.row(facets.coeff(i, 0));
+  //   const Vector3d b = vertices.row(facets.coeff(i, 1));
+  //   const Vector3d c = vertices.row(facets.coeff(i, 2));
+
+  //   const double t = ray_triangle_intersection(ray_origin, ray_direction, a, b, c, tmp_p, tmp_N);
+
+  //   if (t >= 0)
+  //   {
+  //     if (t < closest_t)
+  //     {
+  //       closest_index = i;
+  //       closest_t = t;
+  //       p = tmp_p;
+  //       N = tmp_N;
+  //     }
+  //   }
+  // }
+
+  // if (closest_index < 0)
+  //   return false;
+
+  // return true;
+
+  // TODO: Method 2
+  // Traverse Tree
+  std::vector<AABBTree::Node> nodes = bvh.nodes;
+
+  // Create queue
+  std::queue<int> q;
+  // std::vector<int> q;
+
+  q.push(0); // Push Root
+  while (!q.empty())
   {
-    const Vector3d a = vertices.row(facets.coeff(i, 0));
-    const Vector3d b = vertices.row(facets.coeff(i, 1));
-    const Vector3d c = vertices.row(facets.coeff(i, 2));
+    // std::cout << q.front() << std::endl;
 
-    const double t = ray_triangle_intersection(ray_origin, ray_direction, a, b, c, tmp_p, tmp_N);
+    // Push children to queue and check for intersection
+    if (nodes[q.front()].left != -1)
+      q.push(nodes[q.front()].left);
+    if (nodes[q.front()].right != -1)
+      q.push(nodes[q.front()].right);
 
-    if (t >= 0)
+    // Check intersection
+    if (!ray_box_intersection(ray_origin, ray_direction, nodes[q.front()].bbox))
+      return false;
+
+    // Check if leaf node
+    if ((nodes[q.front()].left == -1 && nodes[q.front()].left == -1))
     {
-      if (t < closest_t)
-      {
-        closest_index = i;
-        closest_t = t;
-        p = tmp_p;
-        N = tmp_N;
-      }
+      // Fetch corresponding triangle and evaluate
+      const int tri = nodes[q.front()].triangle;
+      assert(tri != -1);
+
+      const Vector3d a = vertices.row(facets.coeff(tri, 0)),
+                     b = vertices.row(facets.coeff(tri, 1)),
+                     c = vertices.row(facets.coeff(tri, 2));
+
+      const double t = ray_triangle_intersection(ray_origin, ray_direction, a, b, c, tmp_p, tmp_N);
+      p = tmp_p;
+      N = tmp_N;
+
+      if (t >= 0)
+        return true;
     }
+
+    q.pop(); // Remove front
   }
 
-  if (closest_index < 0)
-    return false;
-
-  return true;
+  return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
