@@ -47,7 +47,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 const std::string data_dir = DATA_DIR;
 const std::string filename("raytrace.png");
-const std::string mesh_filename(data_dir + "dodeca.off");
+const std::string mesh_filename(data_dir + "bunny.off");
 
 // Camera settings
 const double focal_length = 2;
@@ -172,20 +172,26 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
 
   // Choose split axis
   int axis;
-  if ((bbox.max().x() - bbox.min().x()) > (bbox.max().y() - bbox.min().y()) &&
-      (bbox.max().x() - bbox.min().x()) > (bbox.max().z() - bbox.min().z()))
-    axis = 0;
-  else if ((bbox.max().y() - bbox.min().y()) > (bbox.max().z() - bbox.min().z()))
-    axis = 1;
-  else
-    axis = 2;
+  // if ((bbox.max().x() - bbox.min().x()) > (bbox.max().y() - bbox.min().y()) &&
+  //     (bbox.max().x() - bbox.min().x()) > (bbox.max().z() - bbox.min().z()))
+  //   axis = 0;
+  // else if ((bbox.max().y() - bbox.min().y()) > (bbox.max().z() - bbox.min().z()))
+  //   axis = 1;
+  // else
+  //   axis = 2;
 
-  // std::cout << bbox.center() << std::endl;
+  // std::cout << axis << std::endl;
+
+  const Vector3d d = bbox.diagonal();
+  axis = std::max(d.x(), std::max(d.y(), d.z()));
+
+  std::cout << axis << std::endl
+            << std::endl;
 
   // Sort based on axis
-  std::stable_sort(primIds.begin(), primIds.end(),
-                   [&centroids, axis](int i1, int i2)
-                   { return centroids.row(i1)(axis) < centroids.row(i2)(axis); });
+  std::sort(primIds.begin(), primIds.end(),
+            [&centroids, axis](int i1, int i2)
+            { return centroids.row(i1)(axis) < centroids.row(i2)(axis); });
 
   // // Get splits
   std::vector<int> primIdsA(primIds.begin(), primIds.begin() + std::ceil(primIds.size() / 2));
@@ -206,7 +212,6 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
   if (idn == 0)
     nodes[idn].parent = -1;
 
-  // FIXME: possible seg fault
   // Set parent attribute on children
   nodes[l].parent = idn;
   nodes[r].parent = idn;
@@ -465,6 +470,7 @@ void raytrace_scene()
   {
     for (unsigned j = 0; j < h; ++j)
     {
+      // std::cout << i << ", " << j << std::endl;
       const Vector3d pixel_center = image_origin + (i + 0.5) * x_displacement + (j + 0.5) * y_displacement;
 
       // Prepare the ray
