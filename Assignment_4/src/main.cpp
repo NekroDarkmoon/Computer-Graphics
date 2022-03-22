@@ -46,7 +46,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 const std::string data_dir = DATA_DIR;
 const std::string filename("raytrace.png");
-const std::string mesh_filename(data_dir + "cube.off");
+const std::string mesh_filename(data_dir + "dodeca.off");
 
 // Camera settings
 const double focal_length = 2;
@@ -138,10 +138,28 @@ AlignedBox3d bbox_from_triangle(const Vector3d &a, const Vector3d &b, const Vect
 }
 
 int build_tree(const MatrixXi &F, const MatrixXd &V,
-               const MatrixXd &centroids, const std::vector<int> primIds,
+               const MatrixXd &centroids, std::vector<int> primIds,
                std::vector<AABBTree::Node> &nodes)
 {
   // Base Case
+  if (primIds.size() < 2)
+  {
+    // Create leaf node
+    nodes.emplace_back();
+    AABBTree::Node leaf = nodes.back();
+
+    // Set Attribs
+    leaf.parent = -1; // Needs to be set in prev
+    leaf.left = -1;
+    leaf.right = -1;
+    leaf.triangle = primIds[0];
+
+    const MatrixXi v = F.row(leaf.triangle);
+    leaf.bbox = bbox_from_triangle(V.row(v(0)), V.row(v(1)), V.row(v(2)));
+
+    // Return node index
+    return nodes.size() - 1;
+  }
 
   // Create bounding box
   AlignedBox3d bbox;
@@ -161,11 +179,18 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
   else
     axis = 2;
 
-  // Calculate split point
-  std::vector<int> primIdsA = {};
-  std::vector<int> primIdsB = {};
+  // std::cout << bbox.center() << std::endl;
 
-  std::cout << axis << std::endl;
+  // Sort based on axis
+  std::stable_sort(primIds.begin(), primIds.end(),
+                   [&centroids, axis](int i1, int i2)
+                   { return centroids.row(i1)(axis) < centroids.row(i2)(axis); });
+
+  // // Get splits
+  std::vector<int> primIdsA(primIds.begin(), primIds.begin() + std::ceil(primIds.size() / 2));
+  std::vector<int> primIdsB(primIds.begin() + std::floor(primIds.size() / 2), primIds.end());
+
+  // Recurse
 
   return 0;
 }
