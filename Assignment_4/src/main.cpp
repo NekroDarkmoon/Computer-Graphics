@@ -46,7 +46,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////
 const std::string data_dir = DATA_DIR;
 const std::string filename("raytrace.png");
-const std::string mesh_filename(data_dir + "dodeca.off");
+const std::string mesh_filename(data_dir + "cube.off");
 
 // Camera settings
 const double focal_length = 2;
@@ -146,7 +146,7 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
   {
     // Create leaf node
     nodes.emplace_back();
-    AABBTree::Node leaf = nodes.back();
+    AABBTree::Node &leaf = nodes.back();
 
     // Set Attribs
     leaf.parent = -1; // Needs to be set in prev
@@ -190,10 +190,21 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
   std::vector<int> primIdsA(primIds.begin(), primIds.begin() + std::ceil(primIds.size() / 2));
   std::vector<int> primIdsB(primIds.begin() + std::floor(primIds.size() / 2), primIds.end());
 
-  // Recurse
   // Create node
+  nodes.emplace_back();
+  AABBTree::Node &node = nodes.back();
+  int idn = nodes.size() - 1;
+  // Recurse
+  node.left = build_tree(F, V, centroids, primIdsA, nodes);
+  node.right = build_tree(F, V, centroids, primIdsB, nodes);
+  node.parent = -1;
 
-  return 0;
+  // FIXME: possible seg fault
+  // Set parent attribute on children
+  nodes[node.left].parent = idn;
+  nodes[node.right].parent = idn;
+
+  return idn;
 }
 
 AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
@@ -225,8 +236,19 @@ AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
   // Make nodes vector
   std::vector<AABBTree::Node> nodes;
 
-  // Get root
+  // Build root
   int root = build_tree(F, V, centroids, indices, nodes);
+
+  // Set root attribs
+
+  // Print tree
+  int x = 0;
+  for (auto n : nodes)
+  {
+    int leaf = !(n.left && n.right);
+    std::cout << x++ << " " << n.parent << " " << n.left << " " << n.right << " "
+              << " " << std::endl;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////

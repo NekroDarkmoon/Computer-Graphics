@@ -10,6 +10,7 @@
   ],
   "files.associations": {
     "core": "cpp",
-    "cmath": "cpp"
+    "cmath": "cpp",
+    "ostream": "cpp"
   },
 }
