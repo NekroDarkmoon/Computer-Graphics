@@ -194,8 +194,8 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
             { return centroids.row(i1)(axis) < centroids.row(i2)(axis); });
 
   // // Get splits
-  std::vector<int> primIdsA(primIds.begin(), primIds.begin() + std::ceil(primIds.size() / 2));
-  std::vector<int> primIdsB(primIds.begin() + std::floor(primIds.size() / 2), primIds.end());
+  std::vector<int> primIdsA(primIds.begin(), primIds.begin() + std::floor(primIds.size() / 2));
+  std::vector<int> primIdsB(primIds.begin() + std::ceil(primIds.size() / 2), primIds.end());
 
   // Create node
   nodes.emplace_back();
@@ -371,7 +371,10 @@ bool find_nearest_object(const Vector3d &ray_origin, const Vector3d &ray_directi
 
     // Check if intersects with box
     if (!ray_box_intersection(ray_origin, ray_direction, nodes[idx].bbox))
+    {
+      std::cout << "Broke off" << std::endl;
       break;
+    }
 
     // Enqueue children
     if (nodes[idx].left != -1)
