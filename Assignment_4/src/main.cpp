@@ -191,6 +191,7 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
   std::vector<int> primIdsB(primIds.begin() + std::floor(primIds.size() / 2), primIds.end());
 
   // Recurse
+  // Create node
 
   return 0;
 }
