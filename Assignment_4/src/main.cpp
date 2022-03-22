@@ -232,7 +232,6 @@ AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
     centroids.row(i) /= F.cols();
   }
 
-  // TODO:
   // Split each set of primitives into 2 sets of roughly equal size,
   // based on sorting the centroids along one direction or another.
 
@@ -243,10 +242,8 @@ AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
   // Make nodes vector
   std::vector<AABBTree::Node> nodes;
 
-  // Build root
-  int root = build_tree(F, V, centroids, indices, nodes);
-
-  // Set root attribs
+  // Build tree
+  build_tree(F, V, centroids, indices, nodes);
 
   // Print tree
   int x = 0;
@@ -266,7 +263,6 @@ double ray_triangle_intersection(const Vector3d &ray_origin, const Vector3d &ray
                                  const Vector3d &a, const Vector3d &b, const Vector3d &c,
                                  Vector3d &p, Vector3d &N)
 {
-  // TODO:
   // Compute whether the ray intersects the given triangle.
   // If you have done the parallelogram case, this should be very similar to it.
 
@@ -303,7 +299,25 @@ bool ray_box_intersection(const Vector3d &ray_origin, const Vector3d &ray_direct
   // TODO:
   // Compute whether the ray intersects the given box.
   // we are not testing with the real surface here anyway.
-  return false;
+  double tx1 = (box.min().x() - ray_origin(0)) * (1.0 / ray_direction.x());
+  double tx2 = (box.max().x() - ray_origin(0)) * (1.0 / ray_direction.x());
+
+  double tmin = std::min(tx1, tx2);
+  double tmax = std::max(tx1, tx2);
+
+  double ty1 = (box.min().y() - ray_origin(1)) * (1.0 / ray_direction.y());
+  double ty2 = (box.max().y() - ray_origin(1)) * (1.0 / ray_direction.y());
+
+  tmin = std::min(tmin, std::min(ty1, ty2));
+  tmax = std::max(tmax, std::max(ty1, ty2));
+
+  double tz1 = (box.min().z() - ray_origin(2)) * (1.0 / ray_direction.z());
+  double tz2 = (box.max().z() - ray_origin(2)) * (1.0 / ray_direction.z());
+
+  tmin = std::min(tmin, std::min(tz1, tz2));
+  tmax = std::max(tmax, std::max(tz1, tz2));
+
+  return tmax >= tmin;
 }
 
 // Finds the closest intersecting object returns its index
