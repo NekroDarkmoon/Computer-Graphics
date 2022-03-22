@@ -194,15 +194,21 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
   nodes.emplace_back();
   AABBTree::Node &node = nodes.back();
   int idn = nodes.size() - 1;
+
   // Recurse
-  node.left = build_tree(F, V, centroids, primIdsA, nodes);
-  node.right = build_tree(F, V, centroids, primIdsB, nodes);
-  node.parent = -1;
+  int l = build_tree(F, V, centroids, primIdsA, nodes);
+  int r = build_tree(F, V, centroids, primIdsB, nodes);
+
+  nodes[idn].left = l;
+  nodes[idn].right = r;
+
+  if (idn == 0)
+    nodes[idn].parent = -1;
 
   // FIXME: possible seg fault
   // Set parent attribute on children
-  nodes[node.left].parent = idn;
-  nodes[node.right].parent = idn;
+  nodes[l].parent = idn;
+  nodes[r].parent = idn;
 
   return idn;
 }
@@ -229,10 +235,6 @@ AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
   std::vector<int> indices(centroids.rows());
   std::iota(indices.begin(), indices.end(), 0);
 
-  // std::stable_sort(indices.begin(), indices.end(),
-  //                  [&centroids](int i1, int i2)
-  //                  { return centroids.row(i1)(0) < centroids.row(i2)(0); });
-
   // Make nodes vector
   std::vector<AABBTree::Node> nodes;
 
@@ -245,9 +247,9 @@ AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
   int x = 0;
   for (auto n : nodes)
   {
-    int leaf = !(n.left && n.right);
+    int leaf = (n.left && n.right);
     std::cout << x++ << " " << n.parent << " " << n.left << " " << n.right << " "
-              << " " << std::endl;
+              << leaf << std::endl;
   }
 }
 
