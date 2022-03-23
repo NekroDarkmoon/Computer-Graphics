@@ -55,6 +55,9 @@ const double field_of_view = 0.7854; // 45 degrees
 const bool is_perspective = true;
 const Vector3d camera_position(0, 0, 2);
 
+// Max num of recursive calls
+const int max_bounce = 3;
+
 // Triangle Mesh
 MatrixXd vertices; // n x 3 matrix (n points)
 MatrixXi facets;   // m x 3 matrix (m triangles)
@@ -570,7 +573,7 @@ bool is_light_visible(const Vector3d &ray_origin, const Vector3d &ray_direction,
   return false;
 }
 
-Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction)
+Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction, const int max_bounce)
 {
   // Intersection point and normal, these are output of find_nearest_object
   Vector3d p, N;
@@ -615,8 +618,25 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction)
     lights_color += (diffuse + specular).cwiseProduct(light_color) / D.squaredNorm();
   }
 
+  // Reflection
+  Vector4d refl_color = obj_reflection_color;
+
+  if (nearest_object == 4)
+    refl_color = Vector4d(0.5, 0.5, 0.5, 0);
+
+  // Compute the color of the reflected ray and add its contribution to the current point color.
+  // use refl_color
+  const Vector3d refl_direction = ray_direction - (2 * ray_direction.dot(N) * N);
+  const Vector3d e = refl_direction * 0.00001;
+  Vector4d reflection_color = refl_color;
+
+  // Re-bounce till max_depth has been reached
+
+  if (max_bounce > 0)
+    reflection_color = refl_color.cwiseProduct(shoot_ray(p + e, refl_direction, max_bounce - 1));
+
   // Rendering equation
-  Vector4d C = ambient_color + lights_color;
+  Vector4d C = ambient_color + lights_color + reflection_color;
 
   // Set alpha to 1
   C(3) = 1;
@@ -673,7 +693,7 @@ void raytrace_scene()
         ray_direction = Vector3d(0, 0, -1);
       }
 
-      const Vector4d C = shoot_ray(ray_origin, ray_direction);
+      const Vector4d C = shoot_ray(ray_origin, ray_direction, max_bounce);
       R(i, j) = C(0);
       G(i, j) = C(1);
       B(i, j) = C(2);
