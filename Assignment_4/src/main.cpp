@@ -329,7 +329,7 @@ double ray_triangle_intersection(const Vector3d &ray_origin, const Vector3d &ray
   const Vector3d intersection = ray_origin + (ray_direction * t);
 
   p = intersection;
-  N = triag_v.cross(triag_u).normalized();
+  N = -triag_v.cross(triag_u).normalized();
 
   return t;
 }
@@ -545,6 +545,30 @@ bool find_nearest_object(const Vector3d &ray_origin, const Vector3d &ray_directi
 ////////////////////////////////////////////////////////////////////////////////
 // Raytracer code
 ////////////////////////////////////////////////////////////////////////////////
+// Checks if the light is visible
+bool is_light_visible(const Vector3d &ray_origin, const Vector3d &ray_direction,
+                      const Vector3d &light_position)
+{
+  // Determine if the light is visible here
+  Vector3d p, N;
+
+  // Create Epsilon
+  Vector3d e = ray_direction * 0.00001;
+  const bool nearest_object = find_nearest_object(ray_origin + e, ray_direction, p, N);
+
+  // Check if nothing intersects
+  if (!nearest_object)
+    return true;
+
+  // // Check if behind light
+  double inter_dist = (ray_origin - p).squaredNorm();
+  double light_dist = (ray_origin - light_position).squaredNorm();
+
+  if (inter_dist >= light_dist)
+    return true;
+
+  return false;
+}
 
 Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction)
 {
@@ -571,8 +595,14 @@ Vector4d shoot_ray(const Vector3d &ray_origin, const Vector3d &ray_direction)
 
     Vector4d diff_color = obj_diffuse_color;
 
-    // Diffuse contribution
+    // Light
     const Vector3d Li = (light_position - p).normalized();
+
+    // Shadows
+    if (!is_light_visible(p, Li, light_position))
+      continue;
+
+    // Diffuse contribution
     const Vector4d diffuse = diff_color * std::max(Li.dot(N), 0.0);
 
     // Specular contribution
