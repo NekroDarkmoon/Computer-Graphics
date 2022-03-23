@@ -166,36 +166,36 @@ int build_tree(const MatrixXi &F, const MatrixXd &V,
   AlignedBox3d bbox;
   for (int i : primIds)
   {
-    const Vector3d x(centroids.row(i)(0), centroids.row(i)(1), centroids.row(i)(2));
+    const Vector3d x(centroids(i, 0), centroids(i, 1), centroids(i, 2));
     bbox.extend(x);
   }
 
   // Choose split axis
   int axis;
-  // if ((bbox.max().x() - bbox.min().x()) > (bbox.max().y() - bbox.min().y()) &&
-  //     (bbox.max().x() - bbox.min().x()) > (bbox.max().z() - bbox.min().z()))
-  //   axis = 0;
-  // else if ((bbox.max().y() - bbox.min().y()) > (bbox.max().z() - bbox.min().z()))
-  //   axis = 1;
-  // else
-  //   axis = 2;
+  if ((bbox.max().x() - bbox.min().x()) > (bbox.max().y() - bbox.min().y()) &&
+      (bbox.max().x() - bbox.min().x()) > (bbox.max().z() - bbox.min().z()))
+    axis = 0;
+  else if ((bbox.max().y() - bbox.min().y()) > (bbox.max().z() - bbox.min().z()))
+    axis = 1;
+  else
+    axis = 2;
 
   // std::cout << axis << std::endl;
 
-  const Vector3d d = bbox.diagonal();
-  axis = std::max(d.x(), std::max(d.y(), d.z()));
+  // const Vector3d d = bbox.diagonal();
+  // axis = std::max(d.x(), std::max(d.y(), d.z()));
 
-  std::cout << axis << std::endl
-            << std::endl;
+  // std::cout << axis << std::endl
+  //           << std::endl;
 
   // Sort based on axis
   std::sort(primIds.begin(), primIds.end(),
             [&centroids, axis](int i1, int i2)
-            { return centroids.row(i1)(axis) < centroids.row(i2)(axis); });
+            { return centroids(i1, axis) < centroids(i2, axis); });
 
   // // Get splits
-  std::vector<int> primIdsA(primIds.begin(), primIds.begin() + std::floor(primIds.size() / 2));
-  std::vector<int> primIdsB(primIds.begin() + std::ceil(primIds.size() / 2), primIds.end());
+  std::vector<int> primIdsA(primIds.begin(), primIds.begin() + (primIds.size() / 2));
+  std::vector<int> primIdsB(primIds.begin() + (primIds.size() / 2), primIds.end());
 
   // Create node
   nodes.emplace_back();
@@ -258,7 +258,7 @@ AABBTree::AABBTree(const MatrixXd &V, const MatrixXi &F)
   {
     int leaf = (n.left == -1 && n.right == -1);
     std::cout << x++ << " " << n.parent << " " << n.left << " " << n.right << " "
-              << leaf << std::endl;
+              << leaf << " (" << n.bbox.min().transpose() << ") (" << n.bbox.max().transpose() << std::endl;
   }
 }
 
@@ -306,6 +306,7 @@ bool ray_box_intersection(const Vector3d &ray_origin, const Vector3d &ray_direct
   // TODO:
   // Compute whether the ray intersects the given box.
   // we are not testing with the real surface here anyway.
+
   double tx1 = (box.min().x() - ray_origin(0)) * (1.0 / ray_direction.x());
   double tx2 = (box.max().x() - ray_origin(0)) * (1.0 / ray_direction.x());
 
@@ -371,10 +372,7 @@ bool find_nearest_object(const Vector3d &ray_origin, const Vector3d &ray_directi
 
     // Check if intersects with box
     if (!ray_box_intersection(ray_origin, ray_direction, nodes[idx].bbox))
-    {
-      std::cout << "Broke off" << std::endl;
       break;
-    }
 
     // Enqueue children
     if (nodes[idx].left != -1)
