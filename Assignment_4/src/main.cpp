@@ -60,6 +60,11 @@ MatrixXd vertices; // n x 3 matrix (n points)
 MatrixXi facets;   // m x 3 matrix (m triangles)
 AABBTree bvh;
 
+// Objects
+std::vector<Vector3d> sphere_centers;
+std::vector<double> sphere_radii;
+std::vector<Matrix3d> parallelograms;
+
 // Material for the object, same material for all objects
 const Vector4d obj_ambient_color(0.0, 0.5, 0.0, 0);
 const Vector4d obj_diffuse_color(0.5, 0.5, 0.5, 0);
@@ -101,6 +106,34 @@ void setup_scene()
 
   // setup tree
   bvh = AABBTree(vertices, facets);
+
+  // Spheres
+  sphere_centers.emplace_back(10, 0, 1);
+  sphere_radii.emplace_back(1);
+
+  sphere_centers.emplace_back(7, 0.05, -1);
+  sphere_radii.emplace_back(1);
+
+  sphere_centers.emplace_back(4, 0.1, 1);
+  sphere_radii.emplace_back(1);
+
+  sphere_centers.emplace_back(1, 0.2, -1);
+  sphere_radii.emplace_back(1);
+
+  sphere_centers.emplace_back(-2, 0.4, 1);
+  sphere_radii.emplace_back(1);
+
+  sphere_centers.emplace_back(-5, 0.8, -1);
+  sphere_radii.emplace_back(1);
+
+  sphere_centers.emplace_back(-8, 1.6, 1);
+  sphere_radii.emplace_back(1);
+
+  // parallelograms
+  parallelograms.emplace_back();
+  parallelograms.back() << -100, 100, -100,
+      -1.25, 0, -1.2,
+      -100, -100, 100;
 
   // Lights
   light_positions.emplace_back(8, 8, 0);
@@ -328,6 +361,89 @@ bool ray_box_intersection(const Vector3d &ray_origin, const Vector3d &ray_direct
   return tmax >= tmin;
 }
 
+double ray_sphere_intersection(const Vector3d &ray_origin, const Vector3d &ray_direction, int index, Vector3d &p, Vector3d &N)
+{
+  // Implement the intersection between the ray and the sphere at index index.
+  // return t or -1 if no intersection
+
+  // Variables Set up
+  const Vector3d sphere_center = sphere_centers[index];
+  const double sphere_radius = sphere_radii[index];
+  double t = -1;
+
+  double x0, x1;
+  Vector3d length = ray_origin - sphere_center;
+  double a = ray_direction.dot(ray_direction);
+  double b = ray_direction.dot(length) * 2;
+  double c = length.dot(length) - sphere_radius;
+
+  // Solve quadratic using numerically stable formula
+  double discrim = (b * b) - (4 * a * c);
+  if (discrim < 0)
+    return -1;
+  else if (discrim == 0)
+    x0 = x1 = -0.5 * (b / a);
+  else
+  {
+    double x = (b > 0) ? (-0.5 * (b + sqrt(discrim))) : (-0.5 * (b - sqrt(discrim)));
+    x0 = x / a;
+    x1 = c / x;
+  }
+
+  if (x0 > x1)
+    std::swap(x0, x1);
+
+  if (x0 < 0 && x1 < 0)
+    return -1;
+
+  if (x0 < 0)
+    x0 = x1;
+
+  t = x0;
+
+  // Set the correct intersection point, update p to the correct value
+  p = ray_origin + (t * ray_direction);
+  N = ((p - sphere_center) / sphere_radius).normalized();
+
+  return t;
+}
+
+// Compute the intersection between a ray and a paralleogram, return -1 if no intersection
+double ray_parallelogram_intersection(const Vector3d &ray_origin, const Vector3d &ray_direction, int index, Vector3d &p, Vector3d &N)
+{
+  // Implement the intersection between the ray and the parallelogram at index index.
+  // return t or -1 if no intersection
+
+  const Vector3d pgram_origin = parallelograms[index].col(0);
+  const Vector3d A = parallelograms[index].col(1);
+  const Vector3d B = parallelograms[index].col(2);
+  const Vector3d pgram_u = A - pgram_origin;
+  const Vector3d pgram_v = B - pgram_origin;
+
+  // Set the correct intersection point, update p and N to the correct values
+
+  Vector3d P = ray_direction.cross(pgram_v);
+  double det = pgram_u.dot(P);
+  double det_inverse = 1.0 / det;
+
+  Vector3d T = ray_origin - pgram_origin;
+  Vector3d Q = T.cross(pgram_u);
+
+  double a = T.dot(P) * det_inverse;
+  double b = ray_direction.dot(Q) * det_inverse;
+
+  if (a < 0 || a > 1 || b < 0 || b > 1)
+    return -1;
+
+  double t = det_inverse * pgram_v.dot(Q);
+  Vector3d intersection = ray_origin + (ray_direction * t);
+
+  p = intersection;
+  N = pgram_v.cross(pgram_u).normalized();
+
+  return t;
+}
+
 // Finds the closest intersecting object returns its index
 // In case of intersection it writes into p and N (intersection point and normals)
 bool find_nearest_object(const Vector3d &ray_origin, const Vector3d &ray_direction, Vector3d &p, Vector3d &N)
@@ -382,6 +498,42 @@ bool find_nearest_object(const Vector3d &ray_origin, const Vector3d &ray_directi
 
     // Pop front
     q.pop();
+  }
+
+  for (int i = 0; i < sphere_centers.size(); ++i)
+  {
+    // returns t and writes on tmp_p and tmp_N
+    const double t = ray_sphere_intersection(ray_origin, ray_direction, i, tmp_p, tmp_N);
+    // We have intersection
+    if (t >= 0)
+    {
+      // The point is before our current closest t
+      if (t < closest_t)
+      {
+        closest_index = i;
+        closest_t = t;
+        p = tmp_p;
+        N = tmp_N;
+      }
+    }
+  }
+
+  for (int i = 0; i < parallelograms.size(); ++i)
+  {
+    // returns t and writes on tmp_p and tmp_N
+    const double t = ray_parallelogram_intersection(ray_origin, ray_direction, i, tmp_p, tmp_N);
+    // We have intersection
+    if (t >= 0)
+    {
+      // The point is before our current closest t
+      if (t < closest_t)
+      {
+        closest_index = sphere_centers.size() + i;
+        closest_t = t;
+        p = tmp_p;
+        N = tmp_N;
+      }
+    }
   }
 
   if (closest_index < 0)
