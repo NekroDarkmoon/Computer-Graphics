@@ -260,18 +260,27 @@ void get_shading_program(Program &program)
             const Vector3d spec_color = obj_specular_color;
 
             // Light
-            // const Vector3d Li = (light_pos - out.position).normalized();
+            const Vector3d p(out.position(0), out.position(1), out.position(2));
+            const Vector3d Li = (light_pos - p).normalized();
 
-            // lights.color += ambient_light;
+            const Vector3d diffuse = diff_color * std::max(Li.dot(va.normal.cast<double>()), 0.0);
+
+            Vector3d h = (p - camera_position.cast<double>()) + (light_pos - p);
+            h = h / h.norm();
+            const Vector3d specular = spec_color * std::pow(std::max(h.dot(va.normal.cast<double>()), 0.0), obj_specular_exponent);
+
+            const Vector3d D = light_pos - p;
+            lights_color += (diffuse + specular).cwiseProduct(light_color) / D.squaredNorm();
         }
 
+        out.color = (ambient_light + lights_color).cast<float>();
         return out;
     };
 
     program.FragmentShader = [](const VertexAttributes &va, const UniformAttributes &uniform)
     {
         // TODO: create the correct fragment
-        return FragmentAttributes(1, 0, 0);
+        return FragmentAttributes(va.color(0), va.color(1), va.color(2));
     };
 
     program.BlendingShader = [](const FragmentAttributes &fa, const FrameBufferAttributes &previous)
