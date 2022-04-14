@@ -216,6 +216,7 @@ void wireframe_render(const double alpha, Eigen::Matrix<FrameBufferAttributes, E
     program.BlendingShader = [](const FragmentAttributes &fa, const FrameBufferAttributes &previous)
     {
         // TODO: fill the shader
+
         return FrameBufferAttributes(fa.color[0] * 255, fa.color[1] * 255, fa.color[2] * 255, fa.color[3] * 255);
     };
 
@@ -245,8 +246,8 @@ void get_shading_program(Program &program)
 {
     program.VertexShader = [](const VertexAttributes &va, const UniformAttributes &uniform)
     {
-        // TODO: transform the position and the normal
-        // TODO: compute the correct lighting
+        // Transform the position and the normal
+        // Compute the correct lighting
         VertexAttributes out;
         out.position = uniform.view_transform * va.position;
 
@@ -280,13 +281,24 @@ void get_shading_program(Program &program)
     program.FragmentShader = [](const VertexAttributes &va, const UniformAttributes &uniform)
     {
         // TODO: create the correct fragment
-        return FragmentAttributes(va.color(0), va.color(1), va.color(2));
+        FragmentAttributes out(va.color(0), va.color(1), va.color(2));
+        out.position = va.position;
+        out.position[2] = -1 * out.position[2];
+        return out;
     };
 
     program.BlendingShader = [](const FragmentAttributes &fa, const FrameBufferAttributes &previous)
     {
-        // TODO: implement the depth check
-        return FrameBufferAttributes(fa.color[0] * 255, fa.color[1] * 255, fa.color[2] * 255, fa.color[3] * 255);
+        if (fa.position[2] < previous.depth)
+        {
+            FrameBufferAttributes out(fa.color[0] * 255, fa.color[1] * 255, fa.color[2] * 255, fa.color[3] * 255);
+            out.depth = fa.position[2];
+            return out;
+        }
+        else
+        {
+            return previous;
+        }
     };
 }
 
