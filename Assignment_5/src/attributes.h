@@ -8,6 +8,7 @@ public:
     VertexAttributes(float x = 0, float y = 0, float z = 0, float w = 1)
     {
         position << x, y, z, w;
+        color << 0, 0, 0;
     }
 
     // Interpolates the vertex attributes
@@ -21,10 +22,14 @@ public:
     {
         VertexAttributes r;
         r.position = alpha * a.position + beta * b.position + gamma * c.position;
+        r.color = alpha * a.color + beta * b.color + gamma * c.color;
+        r.normal = alpha * a.normal + beta * b.normal + gamma * c.normal;
         return r;
     }
 
     Eigen::Vector4f position;
+    Eigen::Vector3f normal;
+    Eigen::Vector3f color;
 };
 
 class FragmentAttributes
