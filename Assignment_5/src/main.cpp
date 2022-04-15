@@ -99,18 +99,18 @@ void setup_scene()
 
 void build_uniform(UniformAttributes &uniform)
 {
-    // TODO: setup uniform
+    // Setup uniform
     uniform.view_transform << 1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1;
 
-    // TODO: setup camera, compute w, u, v
+    // Setup camera, compute w, u, v
     const Vector3f w = -1.0 * camera_gaze / camera_gaze.norm();
     const Vector3f u = camera_top.cross(w) / camera_top.cross(w).norm();
     const Vector3f v = w.cross(u);
 
-    // TODO: compute the camera transformation
+    // Compute the camera transformation
     Matrix4f temp;
     temp << u(0), v(0), w(0), camera_position(0),
         u(1), v(1), w(1), camera_position(1),
@@ -119,7 +119,7 @@ void build_uniform(UniformAttributes &uniform)
 
     const Matrix4f C = temp.inverse();
 
-    // TODO: setup projection matrix
+    // Setup projection matrix
     const double n = -near_plane;
     const double f = -far_plane;
     const double t = near_plane * tan(field_of_view / 2);
@@ -153,7 +153,7 @@ void simple_render(Eigen::Matrix<FrameBufferAttributes, Eigen::Dynamic, Eigen::D
 
     program.VertexShader = [](const VertexAttributes &va, const UniformAttributes &uniform)
     {
-        // TODO: fill the shader
+        // Fill the shader
         VertexAttributes out;
         out.position = uniform.view_transform * va.position;
         return out;
@@ -161,18 +161,18 @@ void simple_render(Eigen::Matrix<FrameBufferAttributes, Eigen::Dynamic, Eigen::D
 
     program.FragmentShader = [](const VertexAttributes &va, const UniformAttributes &uniform)
     {
-        // TODO: fill the shader
+        // Fill the shader
         return FragmentAttributes(1, 0, 0);
     };
 
     program.BlendingShader = [](const FragmentAttributes &fa, const FrameBufferAttributes &previous)
     {
-        // TODO: fill the shader
+        // Fill the shader
         return FrameBufferAttributes(fa.color[0] * 255, fa.color[1] * 255, fa.color[2] * 255, fa.color[3] * 255);
     };
 
     std::vector<VertexAttributes> vertex_attributes;
-    // TODO: build the vertex attributes from vertices and facets
+    // Build the vertex attributes from vertices and facets
     for (int i = 0; i < facets.rows(); i++)
     {
         vertex_attributes.emplace_back(VertexAttributes(vertices(facets(i, 0), 0), vertices(facets(i, 0), 1), vertices(facets(i, 0), 2)));
@@ -201,7 +201,7 @@ void wireframe_render(const double alpha, Eigen::Matrix<FrameBufferAttributes, E
 
     program.VertexShader = [](const VertexAttributes &va, const UniformAttributes &uniform)
     {
-        // TODO: fill the shader
+        // Fill the shader
         VertexAttributes out;
         out.position = uniform.view_transform * va.position;
         return out;
@@ -209,21 +209,21 @@ void wireframe_render(const double alpha, Eigen::Matrix<FrameBufferAttributes, E
 
     program.FragmentShader = [](const VertexAttributes &va, const UniformAttributes &uniform)
     {
-        // TODO: fill the shader
+        // Fill the shader
         return FragmentAttributes(1, 0, 0);
     };
 
     program.BlendingShader = [](const FragmentAttributes &fa, const FrameBufferAttributes &previous)
     {
-        // TODO: fill the shader
+        // Fill the shader
 
         return FrameBufferAttributes(fa.color[0] * 255, fa.color[1] * 255, fa.color[2] * 255, fa.color[3] * 255);
     };
 
     std::vector<VertexAttributes> vertex_attributes;
 
-    // TODO: generate the vertex attributes for the edges and rasterize the lines
-    // TODO: use the transformation matrix
+    // Generate the vertex attributes for the edges and rasterize the lines
+    // Use the transformation matrix
     for (int i = 0; i < facets.rows(); i++)
     {
         // Edge 1
@@ -280,7 +280,7 @@ void get_shading_program(Program &program)
 
     program.FragmentShader = [](const VertexAttributes &va, const UniformAttributes &uniform)
     {
-        // TODO: create the correct fragment
+        // Create the correct fragment
         FragmentAttributes out(va.color(0), va.color(1), va.color(2));
         out.position = va.position;
         out.position[2] = -1 * out.position[2];
@@ -311,8 +311,8 @@ void flat_shading(const double alpha, Eigen::Matrix<FrameBufferAttributes, Eigen
     Eigen::Matrix4d trafo = compute_rotation(alpha);
 
     std::vector<VertexAttributes> vertex_attributes;
-    // TODO: compute the normals
-    // TODO: set material colors
+    // Compute the normals
+    // Set material colors
 
     for (int i = 0; i < facets.rows(); i++)
     {
