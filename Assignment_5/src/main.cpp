@@ -348,11 +348,45 @@ void pv_shading(const double alpha, Eigen::Matrix<FrameBufferAttributes, Eigen::
 
     Eigen::Matrix4d trafo = compute_rotation(alpha);
 
-    // TODO: compute the vertex normals as vertex normal average
+    // Compute the vertex normals as vertex normal average
+    std::vector<Vector3f> vertex_normals(vertices.rows());
+    for (int i = 0; i < vertex_normals.size(); ++i)
+        vertex_normals[i] = Vector3f(0, 0, 0);
 
+    for (int i = 0; i < facets.rows(); i++)
+    {
+        const Vector3d a = vertices.row(facets(i, 0));
+        const Vector3d b = vertices.row(facets(i, 1));
+        const Vector3d c = vertices.row(facets(i, 2));
+
+        const Vector3d triag_u = b - a;
+        const Vector3d triag_v = c - a;
+        Vector3d N = triag_u.cross(triag_v).normalized();
+
+        vertex_normals[facets(i, 0)] += N.cast<float>();
+        vertex_normals[facets(i, 1)] += N.cast<float>();
+        vertex_normals[facets(i, 2)] += N.cast<float>();
+    }
+
+    for (int i = 0; i < vertex_normals.size(); ++i)
+        vertex_normals[i] = vertex_normals[i].normalized();
+
+    // Create vertex attributes
+    // Set material colors
     std::vector<VertexAttributes> vertex_attributes;
-    // TODO: create vertex attributes
-    // TODO: set material colors
+    for (int i = 0; i < facets.rows(); ++i)
+    {
+        VertexAttributes v1(vertices(facets(i, 0), 0), vertices(facets(i, 0), 1), vertices(facets(i, 0), 2));
+        v1.normal = vertex_normals[facets(i, 0)];
+        VertexAttributes v2(vertices(facets(i, 1), 0), vertices(facets(i, 1), 1), vertices(facets(i, 1), 2));
+        v2.normal = vertex_normals[facets(i, 1)];
+        VertexAttributes v3(vertices(facets(i, 2), 0), vertices(facets(i, 2), 1), vertices(facets(i, 2), 2));
+        v3.normal = vertex_normals[facets(i, 2)];
+
+        vertex_attributes.emplace_back(v1);
+        vertex_attributes.emplace_back(v2);
+        vertex_attributes.emplace_back(v3);
+    }
 
     rasterize_triangles(program, uniform, vertex_attributes, frameBuffer);
 }
@@ -377,15 +411,32 @@ int main(int argc, char *argv[])
 
     // frameBuffer.setConstant(FrameBufferAttributes());
 
-    flat_shading(0, frameBuffer);
-    framebuffer_to_uint8(frameBuffer, image);
-    stbi_write_png("flat_shading.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
+    // flat_shading(0, frameBuffer);
+    // framebuffer_to_uint8(frameBuffer, image);
+    // stbi_write_png("flat_shading.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
+
+    // frameBuffer.setConstant(FrameBufferAttributes());
 
     // pv_shading(0, frameBuffer);
     // framebuffer_to_uint8(frameBuffer, image);
     // stbi_write_png("pv_shading.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
 
+    // frameBuffer.setConstant(FrameBufferAttributes());
+
     // TODO: add the animation
+    int delay = 25;
+    GifWriter g;
+    GifBegin(&g, "wireframe.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
+
+    for (float i = 0; i < 1; i += 0.05)
+    {
+        frameBuffer.setConstant(FrameBufferAttributes());
+        wireframe_render(0, frameBuffer);
+        framebuffer_to_uint8(frameBuffer, image);
+        GifWriteFrame(&g, image.data(), frameBuffer.rows(), frameBuffer.cols(), delay);
+    }
+
+    GifEnd(&g);
 
     return 0;
 }

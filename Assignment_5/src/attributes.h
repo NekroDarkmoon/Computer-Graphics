@@ -9,6 +9,7 @@ public:
     {
         position << x, y, z, w;
         color << 0, 0, 0;
+        normal << 0, 0, 0;
     }
 
     // Interpolates the vertex attributes
