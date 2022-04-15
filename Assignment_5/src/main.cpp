@@ -225,9 +225,9 @@ void wireframe_render(const double alpha, Eigen::Matrix<FrameBufferAttributes, E
     {
         // Fill the shader
 
-        FragmentAttributes out(va.color(0), va.color(1), va.color(2));
+        FragmentAttributes out(1, 0, 0);
         out.position = va.position;
-        // out.position[2] = -1 * out.position[2];
+        out.position[2] = -1 * out.position[2];
         return out;
 
         // return FragmentAttributes(1, 0, 0);
