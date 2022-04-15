@@ -9,7 +9,6 @@ public:
     {
         position << x, y, z, w;
         color << 0, 0, 0;
-        normal << 0, 0, 0;
     }
 
     // Interpolates the vertex attributes
@@ -62,4 +61,5 @@ class UniformAttributes
 {
 public:
     Eigen::Matrix4f view_transform;
+    Eigen::Matrix4f transform;
 };

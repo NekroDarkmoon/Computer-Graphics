@@ -188,7 +188,7 @@ Matrix4f compute_rotation(const double alpha)
     Matrix4f res;
     res << cos(alpha), 0., sin(alpha), 0,
         0, 1, 0, 0,
-        -sin(alpha), 0, cos(alpha), 1,
+        -sin(alpha), 0, cos(alpha), 0,
         0, 0, 0, 1;
 
     return res;
@@ -219,8 +219,16 @@ void wireframe_render(const double alpha, Eigen::Matrix<FrameBufferAttributes, E
     program.BlendingShader = [](const FragmentAttributes &fa, const FrameBufferAttributes &previous)
     {
         // Fill the shader
-
-        return FrameBufferAttributes(fa.color[0] * 255, fa.color[1] * 255, fa.color[2] * 255, fa.color[3] * 255);
+        if (fa.position[2] < previous.depth)
+        {
+            FrameBufferAttributes out(fa.color[0] * 255, fa.color[1] * 255, fa.color[2] * 255, fa.color[3] * 255);
+            out.depth = fa.position[2];
+            return out;
+        }
+        else
+        {
+            return previous;
+        }
     };
 
     std::vector<VertexAttributes> vertex_attributes;
@@ -252,7 +260,7 @@ void get_shading_program(Program &program)
         // Transform the position and the normal
         // Compute the correct lighting
         VertexAttributes out;
-        out.position = uniform.view_transform * va.position;
+        out.position = uniform.view_transform * uniform.transform * va.position;
 
         Vector3d lights_color(0, 0, 0);
         for (int i = 0; i < light_positions.size(); i++)
@@ -311,7 +319,9 @@ void flat_shading(const double alpha, Eigen::Matrix<FrameBufferAttributes, Eigen
     build_uniform(uniform);
     Program program;
     get_shading_program(program);
+
     Eigen::Matrix4f trafo = compute_rotation(alpha);
+    uniform.transform = trafo;
 
     std::vector<VertexAttributes> vertex_attributes;
     // Compute the normals
@@ -350,6 +360,7 @@ void pv_shading(const double alpha, Eigen::Matrix<FrameBufferAttributes, Eigen::
     get_shading_program(program);
 
     Eigen::Matrix4f trafo = compute_rotation(alpha);
+    uniform.transform = trafo;
 
     // Compute the vertex normals as vertex normal average
     std::vector<Vector3f> vertex_normals(vertices.rows());
@@ -429,13 +440,43 @@ int main(int argc, char *argv[])
     // TODO: add the animation
     int delay = 20;
     GifWriter g;
-    GifBegin(&g, "wireframe.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
+
+    // // Wireframe Animation
+    // GifBegin(&g, "wireframe.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
+
+    // for (float i = 0; i < 2 * M_PI; i += M_PI / 12)
+    // {
+    //     std::cout << i << "/" << 2 * M_PI << std::endl;
+    //     frameBuffer.setConstant(FrameBufferAttributes());
+    //     wireframe_render(i, frameBuffer);
+    //     framebuffer_to_uint8(frameBuffer, image);
+    //     GifWriteFrame(&g, image.data(), frameBuffer.rows(), frameBuffer.cols(), delay);
+    // }
+    // std::cout << std::endl;
+    // GifEnd(&g);
+
+    // // Flat Shading Animation
+    // GifBegin(&g, "flat_shading.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
+
+    // for (float i = 0; i < 2 * M_PI; i += M_PI / 12)
+    // {
+    //     std::cout << i << "/" << 2 * M_PI << std::endl;
+    //     frameBuffer.setConstant(FrameBufferAttributes());
+    //     flat_shading(i, frameBuffer);
+    //     framebuffer_to_uint8(frameBuffer, image);
+    //     GifWriteFrame(&g, image.data(), frameBuffer.rows(), frameBuffer.cols(), delay);
+    // }
+    // std::cout << std::endl;
+    // GifEnd(&g);
+
+    // PV Shading Animation
+    GifBegin(&g, "pv_shading.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
 
     for (float i = 0; i < 2 * M_PI; i += M_PI / 12)
     {
         std::cout << i << "/" << 2 * M_PI << std::endl;
         frameBuffer.setConstant(FrameBufferAttributes());
-        wireframe_render(i, frameBuffer);
+        pv_shading(i, frameBuffer);
         framebuffer_to_uint8(frameBuffer, image);
         GifWriteFrame(&g, image.data(), frameBuffer.rows(), frameBuffer.cols(), delay);
     }
