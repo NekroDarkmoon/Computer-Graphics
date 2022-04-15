@@ -142,7 +142,6 @@ void build_uniform(UniformAttributes &uniform)
     }
 
     uniform.view_transform = P * C;
-    std::cout << uniform.view_transform << std::endl;
 }
 
 void simple_render(Eigen::Matrix<FrameBufferAttributes, Eigen::Dynamic, Eigen::Dynamic> &frameBuffer)
@@ -183,10 +182,14 @@ void simple_render(Eigen::Matrix<FrameBufferAttributes, Eigen::Dynamic, Eigen::D
     rasterize_triangles(program, uniform, vertex_attributes, frameBuffer);
 }
 
-Matrix4d compute_rotation(const double alpha)
+Matrix4f compute_rotation(const double alpha)
 {
     // TODO: Compute the rotation matrix of angle alpha on the y axis around the object barycenter
-    Matrix4d res;
+    Matrix4f res;
+    res << cos(alpha), 0., sin(alpha), 0,
+        0, 1, 0, 0,
+        -sin(alpha), 0, cos(alpha), 1,
+        0, 0, 0, 1;
 
     return res;
 }
@@ -197,13 +200,13 @@ void wireframe_render(const double alpha, Eigen::Matrix<FrameBufferAttributes, E
     build_uniform(uniform);
     Program program;
 
-    Matrix4d trafo = compute_rotation(alpha);
+    Matrix4f trafo = compute_rotation(alpha);
 
-    program.VertexShader = [](const VertexAttributes &va, const UniformAttributes &uniform)
+    program.VertexShader = [trafo](const VertexAttributes &va, const UniformAttributes &uniform)
     {
         // Fill the shader
         VertexAttributes out;
-        out.position = uniform.view_transform * va.position;
+        out.position = uniform.view_transform * trafo * va.position;
         return out;
     };
 
@@ -308,7 +311,7 @@ void flat_shading(const double alpha, Eigen::Matrix<FrameBufferAttributes, Eigen
     build_uniform(uniform);
     Program program;
     get_shading_program(program);
-    Eigen::Matrix4d trafo = compute_rotation(alpha);
+    Eigen::Matrix4f trafo = compute_rotation(alpha);
 
     std::vector<VertexAttributes> vertex_attributes;
     // Compute the normals
@@ -346,7 +349,7 @@ void pv_shading(const double alpha, Eigen::Matrix<FrameBufferAttributes, Eigen::
     Program program;
     get_shading_program(program);
 
-    Eigen::Matrix4d trafo = compute_rotation(alpha);
+    Eigen::Matrix4f trafo = compute_rotation(alpha);
 
     // Compute the vertex normals as vertex normal average
     std::vector<Vector3f> vertex_normals(vertices.rows());
@@ -424,18 +427,19 @@ int main(int argc, char *argv[])
     // frameBuffer.setConstant(FrameBufferAttributes());
 
     // TODO: add the animation
-    int delay = 25;
+    int delay = 20;
     GifWriter g;
     GifBegin(&g, "wireframe.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
 
-    for (float i = 0; i < 1; i += 0.05)
+    for (float i = 0; i < 2 * M_PI; i += M_PI / 12)
     {
+        std::cout << i << "/" << 2 * M_PI << std::endl;
         frameBuffer.setConstant(FrameBufferAttributes());
-        wireframe_render(0, frameBuffer);
+        wireframe_render(i, frameBuffer);
         framebuffer_to_uint8(frameBuffer, image);
         GifWriteFrame(&g, image.data(), frameBuffer.rows(), frameBuffer.cols(), delay);
     }
-
+    std::cout << std::endl;
     GifEnd(&g);
 
     return 0;
