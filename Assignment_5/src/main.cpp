@@ -25,7 +25,7 @@ const float near_plane = 1.5; // AKA focal length
 const float far_plane = near_plane * 100;
 const float field_of_view = 0.7854; // 45 degrees
 const float aspect_ratio = 1.5;
-const bool is_perspective = false;
+const bool is_perspective = true;
 const Vector3f camera_position(0, 0, 3);
 const Vector3f camera_gaze(0, 0, -1);
 const Vector3f camera_top(0, 1, 0);
@@ -131,10 +131,21 @@ void build_uniform(UniformAttributes &uniform)
     if (is_perspective)
     {
         // TODO setup prespective camera
+        Matrix4f ortho;
+        ortho << (2 / (r - l)), 0, 0, -((r + l) / (r - l)),
+            0, (2 / (t - b)), 0, -((t + b) / (t - b)),
+            0, 0, (2 / (n - f)), -((n + f) / (n - f)),
+            0, 0, 0, 1;
+
+        P << n, 0, 0, 0,
+            0, n, 0, 0,
+            0, 0, (n + f), -(f * n),
+            0, 0, 1, 0;
+
+        P = ortho * P;
     }
     else
     {
-        Matrix4f ortho;
         P << (2 / (r - l)), 0, 0, -((r + l) / (r - l)),
             0, (2 / (t - b)), 0, -((t + b) / (t - b)),
             0, 0, (2 / (n - f)), -((n + f) / (n - f)),
@@ -431,11 +442,11 @@ int main(int argc, char *argv[])
 
     // frameBuffer.setConstant(FrameBufferAttributes());
 
-    // pv_shading(0, frameBuffer);
-    // framebuffer_to_uint8(frameBuffer, image);
-    // stbi_write_png("pv_shading.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
+    pv_shading(0, frameBuffer);
+    framebuffer_to_uint8(frameBuffer, image);
+    stbi_write_png("pv_shading.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
 
-    // frameBuffer.setConstant(FrameBufferAttributes());
+    frameBuffer.setConstant(FrameBufferAttributes());
 
     // TODO: add the animation
     int delay = 20;
