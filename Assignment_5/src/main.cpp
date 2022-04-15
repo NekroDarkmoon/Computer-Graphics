@@ -224,7 +224,13 @@ void wireframe_render(const double alpha, Eigen::Matrix<FrameBufferAttributes, E
     program.FragmentShader = [](const VertexAttributes &va, const UniformAttributes &uniform)
     {
         // Fill the shader
-        return FragmentAttributes(1, 0, 0);
+
+        FragmentAttributes out(va.color(0), va.color(1), va.color(2));
+        out.position = va.position;
+        // out.position[2] = -1 * out.position[2];
+        return out;
+
+        // return FragmentAttributes(1, 0, 0);
     };
 
     program.BlendingShader = [](const FragmentAttributes &fa, const FrameBufferAttributes &previous)
@@ -305,7 +311,7 @@ void get_shading_program(Program &program)
         // Create the correct fragment
         FragmentAttributes out(va.color(0), va.color(1), va.color(2));
         out.position = va.position;
-        out.position[2] = -1 * out.position[2];
+        // out.position[2] = -1 * out.position[2];
         return out;
     };
 
@@ -424,23 +430,23 @@ int main(int argc, char *argv[])
     Eigen::Matrix<FrameBufferAttributes, Eigen::Dynamic, Eigen::Dynamic> frameBuffer(W, H);
     vector<uint8_t> image;
 
-    // simple_render(frameBuffer);
-    // framebuffer_to_uint8(frameBuffer, image);
-    // stbi_write_png("simple.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
+    simple_render(frameBuffer);
+    framebuffer_to_uint8(frameBuffer, image);
+    stbi_write_png("simple.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
 
-    // frameBuffer.setConstant(FrameBufferAttributes());
+    frameBuffer.setConstant(FrameBufferAttributes());
 
-    // wireframe_render(0, frameBuffer);
-    // framebuffer_to_uint8(frameBuffer, image);
-    // stbi_write_png("wireframe.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
+    wireframe_render(0, frameBuffer);
+    framebuffer_to_uint8(frameBuffer, image);
+    stbi_write_png("wireframe.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
 
-    // frameBuffer.setConstant(FrameBufferAttributes());
+    frameBuffer.setConstant(FrameBufferAttributes());
 
-    // flat_shading(0, frameBuffer);
-    // framebuffer_to_uint8(frameBuffer, image);
-    // stbi_write_png("flat_shading.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
+    flat_shading(0, frameBuffer);
+    framebuffer_to_uint8(frameBuffer, image);
+    stbi_write_png("flat_shading.png", frameBuffer.rows(), frameBuffer.cols(), 4, image.data(), frameBuffer.rows() * 4);
 
-    // frameBuffer.setConstant(FrameBufferAttributes());
+    frameBuffer.setConstant(FrameBufferAttributes());
 
     pv_shading(0, frameBuffer);
     framebuffer_to_uint8(frameBuffer, image);
@@ -452,33 +458,33 @@ int main(int argc, char *argv[])
     int delay = 20;
     GifWriter g;
 
-    // // Wireframe Animation
-    // GifBegin(&g, "wireframe.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
+    // Wireframe Animation
+    GifBegin(&g, "wireframe.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
 
-    // for (float i = 0; i < 2 * M_PI; i += M_PI / 12)
-    // {
-    //     std::cout << i << "/" << 2 * M_PI << std::endl;
-    //     frameBuffer.setConstant(FrameBufferAttributes());
-    //     wireframe_render(i, frameBuffer);
-    //     framebuffer_to_uint8(frameBuffer, image);
-    //     GifWriteFrame(&g, image.data(), frameBuffer.rows(), frameBuffer.cols(), delay);
-    // }
-    // std::cout << std::endl;
-    // GifEnd(&g);
+    for (float i = 0; i < 2 * M_PI; i += M_PI / 12)
+    {
+        std::cout << i << "/" << 2 * M_PI << std::endl;
+        frameBuffer.setConstant(FrameBufferAttributes());
+        wireframe_render(i, frameBuffer);
+        framebuffer_to_uint8(frameBuffer, image);
+        GifWriteFrame(&g, image.data(), frameBuffer.rows(), frameBuffer.cols(), delay);
+    }
+    std::cout << std::endl;
+    GifEnd(&g);
 
-    // // Flat Shading Animation
-    // GifBegin(&g, "flat_shading.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
+    // Flat Shading Animation
+    GifBegin(&g, "flat_shading.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
 
-    // for (float i = 0; i < 2 * M_PI; i += M_PI / 12)
-    // {
-    //     std::cout << i << "/" << 2 * M_PI << std::endl;
-    //     frameBuffer.setConstant(FrameBufferAttributes());
-    //     flat_shading(i, frameBuffer);
-    //     framebuffer_to_uint8(frameBuffer, image);
-    //     GifWriteFrame(&g, image.data(), frameBuffer.rows(), frameBuffer.cols(), delay);
-    // }
-    // std::cout << std::endl;
-    // GifEnd(&g);
+    for (float i = 0; i < 2 * M_PI; i += M_PI / 12)
+    {
+        std::cout << i << "/" << 2 * M_PI << std::endl;
+        frameBuffer.setConstant(FrameBufferAttributes());
+        flat_shading(i, frameBuffer);
+        framebuffer_to_uint8(frameBuffer, image);
+        GifWriteFrame(&g, image.data(), frameBuffer.rows(), frameBuffer.cols(), delay);
+    }
+    std::cout << std::endl;
+    GifEnd(&g);
 
     // PV Shading Animation
     GifBegin(&g, "pv_shading.gif", frameBuffer.rows(), frameBuffer.cols(), delay);
